@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="MediaTrackMixerPage.MediaTrackMixerProcessingPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MediaTrackMixer"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <RelativePanel HorizontalAlignment="Center">
+            <TextBlock Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap" MaxWidth="700" RelativePanel.Above="TracksListViewGrid"
+                       Foreground="{StaticResource TextFillColorSecondaryBrush}" HorizontalTextAlignment="Justify">
+                You can rename track titles by clicking on the Edit button. You can also re-order tracks by 
+                dragging and dropping them. This order they appear in the list will determine the order they 
+                appear in the output media for each category.
+            </TextBlock>
+            <Grid x:Name="TracksListViewGrid" Margin="0, 10, 0, 10" RelativePanel.AlignRightWithPanel="True" RelativePanel.Above="ControlsGrid"
+                  RelativePanel.AlignLeftWithPanel="True">
+                <ListView x:Name="TracksListView" CanReorderItems="True" CanDrag="True" AllowDrop="True" SelectionMode="None" HorizontalAlignment="Center"
+                          ItemsSource="{x:Bind viewModel.Tracks}" ItemTemplate="{StaticResource TrackTemplate}"/>
+            </Grid>
+            <Grid x:Name="ControlsGrid" RelativePanel.Above="OperationInfoBar" RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True">
+                <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center" Visibility="{x:Bind viewModel.ShowBackMixStack, Mode=OneWay}">
+                    <Button Width="150" Click="GoBack">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <SymbolIcon Symbol="Back" />
+                            <TextBlock HorizontalTextAlignment="Center">Back</TextBlock>
+                        </StackPanel>
+                    </Button>
+                    <Button Width="150" Style="{StaticResource AccentButtonStyle}" Visibility="{x:Bind viewModel.ShowMixBut, Mode=OneWay}" Click="Save">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <SymbolIcon Symbol="Accept" />
+                            <TextBlock HorizontalTextAlignment="Center">Mix!</TextBlock>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+                <RelativePanel Visibility="{x:Bind viewModel.ShowProgressPanel, Mode=OneWay}">
+                    <TextBlock>Mixing...</TextBlock>
+                    <TextBlock Margin="0,0,0,10" x:Name="ProgressText" RelativePanel.AlignRightWithPanel="True" Text="0.00%"/>
+                    <ProgressBar x:Name="ProgressBar" Maximum="100" RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True" RelativePanel.Below="ProgressText"/>
+                </RelativePanel>
+            </Grid>
+            <InfoBar x:Name="OperationInfoBar" IsOpen="{x:Bind viewModel.ShowInfoBar, Mode=OneWay}" Severity="{x:Bind viewModel.InfoBarSeverity, Mode=OneWay}"
+                     Message="{x:Bind viewModel.InfoBarMessage, Mode=OneWay}" RelativePanel.AlignBottomWithPanel="True"
+                     RelativePanel.AlignRightWithPanel="True" RelativePanel.AlignLeftWithPanel="True" Margin="0,10,0,0"/>
+        </RelativePanel>
+    </Grid>
+</Page>

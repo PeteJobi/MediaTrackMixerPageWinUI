@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary x:Class="MediaTrackMixer.Resources.Template"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewModels="using:MediaTrackMixerPage.ViewModels">
+
+    <DataTemplate x:Key="TrackTemplate" x:DataType="viewModels:Track">
+        <Grid Height="40" BorderBrush="{ThemeResource TextFillColorPrimaryBrush}" BorderThickness="1" Background="{ThemeResource TrackBackground}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="60" />
+                <ColumnDefinition Width="60" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid>
+                <Ellipse Fill="{x:Bind Colour.Background}" Stroke="{ThemeResource TextFillColorPrimaryBrush}" Width="30" Height="30" ToolTipService.ToolTip="{x:Bind FileNameString}"></Ellipse>
+                <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="22" Text="{x:Bind IndexString}" Foreground="{x:Bind Colour.Foreground}"/>
+            </Grid>
+            <FontIcon Grid.Column="1" Glyph="{x:Bind Icon}" ToolTipService.ToolTip="{x:Bind ToolTip}"/>
+            <TextBlock Grid.Column="2" VerticalAlignment="Center" Text="{x:Bind Title}" TextTrimming="CharacterEllipsis" Visibility="{x:Bind NotOnSecondPage}"/>
+            <Grid Grid.Column="2" VerticalAlignment="Stretch" Visibility="{x:Bind OnSecondPage}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid Visibility="{x:Bind NotInEditMode, Mode=OneWay}">
+                    <TextBlock VerticalAlignment="Center" Visibility="{x:Bind HasNoTitle, Mode=OneWay}"
+                               Foreground="{ThemeResource TextFillColorDisabledBrush}" FontStyle="Italic">
+                        (No Title)
+                    </TextBlock>
+                    <TextBlock VerticalAlignment="Center" Text="{x:Bind Title, Mode=OneWay}" TextTrimming="CharacterEllipsis"
+                               Visibility="{x:Bind HasTitle, Mode=OneWay}" />
+                </Grid>
+                <TextBox Text="{x:Bind Title, Mode=TwoWay}" Visibility="{x:Bind InEditMode, Mode=OneWay}"
+                         VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
+                <ToggleButton Grid.Column="1" Margin="10,0,0,0" Click="TitleEdit" IsEnabled="{x:Bind IsNotChapter}">
+                    <SymbolIcon Symbol="Edit"/>
+                </ToggleButton>
+            </Grid>
+            <TextBlock Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right" Text="{x:Bind CodecOrMimeType}" Margin="10,0" />
+        </Grid>
+    </DataTemplate>
+</ResourceDictionary>
