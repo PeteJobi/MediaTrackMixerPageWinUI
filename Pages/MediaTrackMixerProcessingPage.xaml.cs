@@ -205,6 +205,6 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
     {
         var transition = new SlideNavigationTransitionInfo();
         transition.Effect = SlideNavigationTransitionEffect.FromLeft;
-        Frame.GoBack(transition);
+        Frame.NavigateToType(typeof(MediaTrackMixerMainPage), null, new FrameNavigationOptions { IsNavigationStackEnabled = false, TransitionInfoOverride = transition });
     }
 }
