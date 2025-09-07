@@ -152,7 +152,7 @@ namespace MediaTrackMixerPage
                 await StartProcess(ffmpegPath, $"-dump_attachment:{maps[0].TrackIndex} \"{output}\" -i \"{tracks[0].Path}\"", null, (sender, args) =>
                 {
                     if (string.IsNullOrWhiteSpace(args.Data)) return;
-                    Debug.WriteLine(args.Data);
+                    //Debug.WriteLine(args.Data);
                     if (args.Data == "Conversion failed!")
                     {
                         failure = true;

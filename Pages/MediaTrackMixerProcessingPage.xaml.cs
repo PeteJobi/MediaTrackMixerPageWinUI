@@ -31,6 +31,7 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
 {
     private ProcessingPageModel viewModel;
     private MediaTrackMixer mixer;
+    private string? outputFile;
     private List<MediaTrackMixer.TrackGroup> mixerTracks;
 
     public MediaTrackMixerProcessingPage()
@@ -190,6 +191,7 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
             var isExtractingAttachment = viewModel.Tracks is [{ Type: TrackType.Attachment }]; //viewModel.Tracks.Count == 1 && viewModel.Tracks[0].Type == TrackType.Attachment;
             await mixer.Mix(mixerTracks, file.Path, maps, null, isExtractingAttachment, progress);
             success = true;
+            outputFile = file.Path;
         }
         catch (Exception)
         {
@@ -205,6 +207,6 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
     {
         var transition = new SlideNavigationTransitionInfo();
         transition.Effect = SlideNavigationTransitionEffect.FromLeft;
-        Frame.NavigateToType(typeof(MediaTrackMixerMainPage), null, new FrameNavigationOptions { IsNavigationStackEnabled = false, TransitionInfoOverride = transition });
+        Frame.NavigateToType(typeof(MediaTrackMixerMainPage), outputFile, new FrameNavigationOptions { IsNavigationStackEnabled = false, TransitionInfoOverride = transition });
     }
 }

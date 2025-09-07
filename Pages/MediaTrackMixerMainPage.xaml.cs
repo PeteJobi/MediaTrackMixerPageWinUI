@@ -31,7 +31,7 @@ public sealed partial class MediaTrackMixerMainPage : Page
     private List<MediaTrackMixer.TrackGroup> mixerTracks;
     private string? navigateTo;
     private string ffmpegPath;
-    private string? outputFile;
+    private List<string> outputFiles = [];
     public static List<string> AllSupportedTypes = [ ".mkv", ".mp4", ".mp3", ".wav", ".srt", ".ass" ];
     (string, bool)[] colours =
     [
@@ -59,6 +59,8 @@ public sealed partial class MediaTrackMixerMainPage : Page
             mixer = new MediaTrackMixer(ffmpegPath);
             await AddMedia(props.MediaPaths.ToArray());
         }
+
+        if (e.Parameter is string output && !outputFiles.Contains(output)) outputFiles.Add(output);
     }
 
     private async void ShowFilePicker(object sender, RoutedEventArgs e)
@@ -66,7 +68,7 @@ public sealed partial class MediaTrackMixerMainPage : Page
         var filePicker = new FileOpenPicker();
         filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
         AllSupportedTypes.ForEach(t => filePicker.FileTypeFilter.Add(t));
-        var windowId = this.XamlRoot?.ContentIslandEnvironment?.AppWindowId;
+        var windowId = XamlRoot?.ContentIslandEnvironment?.AppWindowId;
         var hwnd = Win32Interop.GetWindowFromWindowId(windowId.Value);
         WinRT.Interop.InitializeWithWindow.Initialize(filePicker, hwnd);
         var files = await filePicker.PickMultipleFilesAsync();
@@ -239,7 +241,7 @@ public sealed partial class MediaTrackMixerMainPage : Page
     private void GoBack(object sender, RoutedEventArgs e)
     {
         if (navigateTo == null) Frame.GoBack();
-        else Frame.NavigateToType(Type.GetType(navigateTo), outputFile, new FrameNavigationOptions { IsNavigationStackEnabled = false });
+        else Frame.NavigateToType(Type.GetType(navigateTo), outputFiles, new FrameNavigationOptions { IsNavigationStackEnabled = false });
     }
 }
 
