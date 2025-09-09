@@ -153,7 +153,7 @@ namespace MediaTrackMixerPage
                 {
                     if (string.IsNullOrWhiteSpace(args.Data)) return;
                     //Debug.WriteLine(args.Data);
-                    if (args.Data == "Conversion failed!")
+                    if (HasError(args.Data))
                     {
                         failure = true;
                     }
@@ -187,13 +187,12 @@ namespace MediaTrackMixerPage
             }).Where(arg => arg != null));
             var disableDefaultMappingFromFirstInput = "-map_metadata -1 -map_chapters -1"; //By default, ffmpeg maps the global metadata and chapters from the first input. These arguments disable that.
             var outputExtension = Path.GetExtension(output);
-            var subtitleEncode = "-c:s mov_text";
+            var subtitleEncode = "-c:s copy";
             var audioEncode = "-c:a copy";
             switch (outputExtension)
             {
-                case ".mkv":
-                case ".srt":
-                    subtitleEncode = "-c:s copy";
+                case ".mp4":
+                    subtitleEncode = "-c:s mov_text";
                     break;
                 case ".mp3":
                     audioEncode = string.Empty;
@@ -214,7 +213,7 @@ namespace MediaTrackMixerPage
             {
                 if (string.IsNullOrWhiteSpace(args.Data)) return;
                 Debug.WriteLine(args.Data);
-                if (args.Data == "Conversion failed!")
+                if (HasError(args.Data))
                 {
                     failure = true;
                     return;
@@ -234,6 +233,10 @@ namespace MediaTrackMixerPage
             var name = Path.GetFileNameWithoutExtension(fileNameWithExtension);
             return (name, ext);
         }
+
+        private bool HasError(string line) => line == "Conversion failed!"
+                                                || line.StartsWith("Error initializing the muxer")
+                                                || line.StartsWith("Error opening output file");
 
         private static TrackType GetTrackType(string type) => type switch
         {
