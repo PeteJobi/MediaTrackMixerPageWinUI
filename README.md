@@ -1,9 +1,9 @@
-## Media Track Mixer Page (WinUI 3)
+# Media Track Mixer Page (WinUI 3)
 This provides a reuseable WinUI 3 page with an interface that allows for extracting/combining media tracks.
 
 <img width="687" height="1017" alt="image" src="https://github.com/user-attachments/assets/0fc3222a-df96-4772-ae7a-d4f78697c404" />
 
-# How to use
+## How to use
 Include this library into your WinUI solution and reference it in your WinUI project. Then navigate to the **MediaTrackMixerMainPage** when the user requests for it, passing a **MixerProps** object as parameter.
 The **MixerProps** object should contain the path to ffmpeg, the paths to the input media files, and optionally, the full name of the Page type to navigate back to when the user is done. If this last parameter is provided, you can get the path to the files that were generated on the Media Track Mixer page. If not, the user will be navigated back to whichever page called the Media Track Mixer page and there'll be no parameters. 
 ```
