@@ -34,7 +34,7 @@
                     </Button>
                     <Button Width="150" Style="{StaticResource AccentButtonStyle}" Visibility="{x:Bind viewModel.ShowMixBut, Mode=OneWay}" Click="Save">
                         <StackPanel Orientation="Horizontal" Spacing="10">
-                            <SymbolIcon Symbol="Accept" />
+                            <FontIcon Glyph="&#xE81E;"/>
                             <TextBlock HorizontalTextAlignment="Center">Mix!</TextBlock>
                         </StackPanel>
                     </Button>
