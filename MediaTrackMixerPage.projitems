@@ -19,7 +19,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="$(MSBuildThisFileDirectory)Resources\Templates.xaml">
+    <Page Include="$(MSBuildThisFileDirectory)Resources\MixerTemplates.xaml">
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -33,8 +33,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)Pages\MediaTrackMixerProcessingPage.xaml.cs">
       <DependentUpon>MediaTrackMixerProcessingPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="$(MSBuildThisFileDirectory)Resources\Templates.xaml.cs">
-      <DependentUpon>Templates.xaml</DependentUpon>
+    <Compile Include="$(MSBuildThisFileDirectory)Resources\MixerTemplates.xaml.cs">
+      <DependentUpon>MixerTemplates.xaml</DependentUpon>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)ViewModels\MainModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ViewModels\ProcessingPageModel.cs" />
