@@ -10,9 +10,6 @@
     NavigationCacheMode="Enabled">
 
     <Grid AllowDrop="True" Drop="MainPage_OnDrop" DragOver="MainPage_OnDragOver" Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"></RowDefinition>
-        </Grid.RowDefinitions>
         <RelativePanel Visibility="{x:Bind _mainModel.HasTracks, Mode=OneWay}">
             <RelativePanel.Resources>
                 <CollectionViewSource x:Name="CollectionViewSourcee" IsSourceGrouped="True" />
@@ -32,21 +29,17 @@
                                             <ColumnDefinition Width="50" />
                                         </Grid.ColumnDefinitions>
                                         <CheckBox Margin="2,0,0,0" Checked="TrackGroupChecked"
-                                                  Unchecked="TrackGroupChecked"
-                                                  IsChecked="{x:Bind Checked, Mode=OneWay}">
+                                                  Unchecked="TrackGroupChecked" IsChecked="{x:Bind Checked, Mode=OneWay}">
                                         </CheckBox>
-                                        <Ellipse Grid.Column="1" Fill="{x:Bind Colour.Background}" Stroke="Black" Width="15"
-                                                 Height="15" />
-                                        <TextBlock Grid.Column="2" VerticalAlignment="Center"
-                                                   Text="{x:Bind FileName}"
-                                                   TextTrimming="CharacterEllipsis">
+                                        <Ellipse Grid.Column="1" Fill="{x:Bind Colour.Background}" Stroke="Black" Width="15" Height="15" />
+                                        <TextBlock Grid.Column="2" VerticalAlignment="Center" ToolTipService.ToolTip="{x:Bind FullPath}"
+                                                   Text="{x:Bind FileName}" TextTrimming="CharacterEllipsis">
                                         </TextBlock>
                                         <Button Grid.Column="3" HorizontalAlignment="Right">
                                             <SymbolIcon Symbol="More" />
                                             <Button.Flyout>
                                                 <MenuFlyout>
-                                                    <MenuFlyoutItem Text="Select video and audio"
-                                                                    Click="SelectVideoAndAudio">
+                                                    <MenuFlyoutItem Text="Select video and audio" Click="SelectVideoAndAudio">
                                                         <MenuFlyoutItem.Icon>
                                                             <FontIcon Glyph="&#xEA69;" />
                                                         </MenuFlyoutItem.Icon>
@@ -58,8 +51,7 @@
                                                     </MenuFlyoutItem>
                                                     <MenuFlyoutItem Text="Remove media" Click="TrackGroupDeleted">
                                                         <MenuFlyoutItem.Icon>
-                                                            <SymbolIcon Symbol="Delete"
-                                                                        Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+                                                            <SymbolIcon Symbol="Delete" Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
                                                         </MenuFlyoutItem.Icon>
                                                     </MenuFlyoutItem>
                                                 </MenuFlyout>

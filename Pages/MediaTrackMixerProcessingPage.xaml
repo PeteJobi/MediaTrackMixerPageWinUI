@@ -9,12 +9,9 @@
     mc:Ignorable="d">
 
     <Grid Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"></RowDefinition>
-        </Grid.RowDefinitions>
         <RelativePanel HorizontalAlignment="Center">
-            <TextBlock Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap" MaxWidth="700" RelativePanel.Above="TracksListViewGrid"
-                       Foreground="{StaticResource TextFillColorSecondaryBrush}" HorizontalTextAlignment="Justify">
+            <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" TextWrapping="Wrap" MaxWidth="700" RelativePanel.Above="TracksListViewGrid"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalTextAlignment="Justify">
                 You can rename track titles by clicking on the Edit button. You can also re-order tracks by 
                 dragging and dropping them. This order they appear in the list will determine the order they 
                 appear in the output media for each category.

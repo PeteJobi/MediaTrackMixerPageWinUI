@@ -11,10 +11,6 @@ namespace MediaTrackMixerPage
 {
     public class MediaTrackMixer(string ffmpegPath)
     {
-        public MediaTrackMixer() : this("ffmpeg.exe")
-        {
-        }
-
         public async Task<List<TrackGroup>> GetTracks(string[] inputs)
         {
             var trackGroups = new List<TrackGroup>();

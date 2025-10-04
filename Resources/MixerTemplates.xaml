@@ -4,6 +4,14 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:viewModels="using:MediaTrackMixerPage.ViewModels">
 
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="TrackBackground" Color="AliceBlue"/>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+            <SolidColorBrush x:Key="TrackBackground" Color="#262626"/>
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
     <DataTemplate x:Key="TrackTemplate" x:DataType="viewModels:Track">
         <Grid Height="40" BorderBrush="{ThemeResource TextFillColorPrimaryBrush}" BorderThickness="1" Background="{ThemeResource TrackBackground}">
             <Grid.ColumnDefinitions>
@@ -12,8 +20,8 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Grid>
-                <Ellipse Fill="{x:Bind Colour.Background}" Stroke="{ThemeResource TextFillColorPrimaryBrush}" Width="30" Height="30" ToolTipService.ToolTip="{x:Bind FileNameString}"></Ellipse>
+            <Grid ToolTipService.ToolTip="{x:Bind FileNameString}">
+                <Ellipse Fill="{x:Bind Colour.Background}" Stroke="{ThemeResource TextFillColorPrimaryBrush}" Width="30" Height="30" ToolTipService.ToolTip="{x:Bind FileNameString}"/>
                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="22" Text="{x:Bind IndexString}" Foreground="{x:Bind Colour.Foreground}"/>
             </Grid>
             <FontIcon Grid.Column="1" Glyph="{x:Bind Icon}" ToolTipService.ToolTip="{x:Bind ToolTip}"/>
