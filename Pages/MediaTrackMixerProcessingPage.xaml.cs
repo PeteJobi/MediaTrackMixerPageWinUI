@@ -172,7 +172,7 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
         fileSaver.SuggestedFileName = suggestedFileName;
         fileSaver.SuggestedStartLocation = suggestedStartLocation;
         fileSaver.FileTypeChoices.Add("Media files", fileTypeChoices.ToList());
-        var windowId = this.XamlRoot?.ContentIslandEnvironment?.AppWindowId;
+        var windowId = XamlRoot?.ContentIslandEnvironment?.AppWindowId;
         var hwnd = Win32Interop.GetWindowFromWindowId(windowId.Value);
         //var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(MainWindow.Window);
         WinRT.Interop.InitializeWithWindow.Initialize(fileSaver, hwnd);

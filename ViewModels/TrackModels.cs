@@ -55,7 +55,7 @@ public class Track : INotifyPropertyChanged
         TrackType.Audio => "\uE8D6",
         TrackType.Subtitle => "\uED1E",
         TrackType.Chapters => "\uE8F1",
-        TrackType.Attachment => CodecOrMimeType?.StartsWith("font") == true ? "\uE8D2" : "\uE723",
+        TrackType.Attachment => MimeIsFont(CodecOrMimeType) ? "\uE8D2" : "\uE723",
         TrackType.GlobalMetadata => "\uE946",
         _ => "\uE9CE"
     };
@@ -65,7 +65,7 @@ public class Track : INotifyPropertyChanged
         TrackType.Audio => "Audio",
         TrackType.Subtitle => "Subtitle",
         TrackType.Chapters => "Chapters",
-        TrackType.Attachment => CodecOrMimeType?.StartsWith("font") == true ? "Font" : "Attachment",
+        TrackType.Attachment => MimeIsFont(CodecOrMimeType) ? "Font" : "Attachment",
         TrackType.GlobalMetadata => "Global Metadata",
         _ => "Unknown"
     };
@@ -88,6 +88,8 @@ public class Track : INotifyPropertyChanged
         TrackType.GlobalMetadata => MediaTrackMixer.GeneralType.GlobalMetadata,
         _ => MediaTrackMixer.GeneralType.None
     };
+
+    private bool MimeIsFont(string? mimeType) => mimeType?.Contains("font") == true;
 }
 
 public class Colour
