@@ -4,16 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:viewModels="using:MediaTrackMixerPage.ViewModels">
 
-    <ResourceDictionary.ThemeDictionaries>
-        <ResourceDictionary x:Key="Light">
-            <SolidColorBrush x:Key="TrackBackground" Color="AliceBlue"/>
-        </ResourceDictionary>
-        <ResourceDictionary x:Key="Dark">
-            <SolidColorBrush x:Key="TrackBackground" Color="#262626"/>
-        </ResourceDictionary>
-    </ResourceDictionary.ThemeDictionaries>
     <DataTemplate x:Key="TrackTemplate" x:DataType="viewModels:Track">
-        <Grid Height="40" BorderBrush="{ThemeResource TextFillColorPrimaryBrush}" BorderThickness="1" Background="{ThemeResource TrackBackground}">
+        <Grid Height="40" BorderBrush="{ThemeResource TextFillColorPrimaryBrush}" BorderThickness="1" Background="{ThemeResource ListItemBackground}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="60" />
                 <ColumnDefinition Width="60" />
