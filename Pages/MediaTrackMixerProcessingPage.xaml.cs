@@ -14,10 +14,12 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Foundation.Metadata;
 using Windows.Storage.Pickers;
+using WinUIShared.Enums;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -178,33 +180,60 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
         WinRT.Interop.InitializeWithWindow.Initialize(fileSaver, hwnd);
         var file = await fileSaver.PickSaveFileAsync();
         if (file == null) return;
-        viewModel.OperationVisibility = OperationVisibility.ShowProgress;
+
+        viewModel.State = OperationState.DuringOperation;
+        ProcessProgress.ProgressPrimary = 0;
+        ProcessProgress.RightTextPrimary = "0.0%";
+
         var maps = GetMaps();
         var progress = new Progress<double>(progress =>
         {
-            ProgressBar.Value = progress;
-            ProgressText.Text = $"{Math.Round(progress, 2)}%";
+            ProcessProgress.ProgressPrimary = progress;
+            ProcessProgress.RightTextPrimary = $"{Math.Round(progress, 2)}%";
         });
-        bool success;
+        var failed = false;
+        string? errorMessage = null;
         try
         {
-            var isExtractingAttachment = viewModel.Tracks is [{ Type: TrackType.Attachment }]; //viewModel.Tracks.Count == 1 && viewModel.Tracks[0].Type == TrackType.Attachment;
-            await mixer.Mix(mixerTracks, file.Path, maps, null, isExtractingAttachment, progress);
-            success = true;
+            var isExtractingAttachment = viewModel.Tracks is [{ Type: TrackType.Attachment }]; //Meaning: viewModel.Tracks.Count == 1 && viewModel.Tracks[0].Type == TrackType.Attachment;
+            await mixer.Mix(mixerTracks, file.Path, maps, progress, ErrorActionFromFfmpeg, isExtractingAttachment);
+
+            if (viewModel.State == OperationState.BeforeOperation) return; //Canceled
+            if (failed)
+            {
+                viewModel.State = OperationState.BeforeOperation;
+                await ErrorAction(errorMessage!);
+                await mixer.Cancel();
+                return;
+            }
+
+            viewModel.State = OperationState.AfterOperation;
+            ProcessProgress.RightTextPrimary = "Done";
             outputFile = file.Path;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            success = false;
+            await ErrorAction(ex.Message);
+            viewModel.State = OperationState.BeforeOperation;
         }
-        viewModel.OperationVisibility = OperationVisibility.ShowOnlyBack;
-        viewModel.ShowInfoBar = true;
-        viewModel.InfoBarSeverity = success ? InfoBarSeverity.Success : InfoBarSeverity.Error;
-        viewModel.InfoBarMessage = success ? "Track mix completed successfully" : "Track mix was not successful";
+
+        void ErrorActionFromFfmpeg(string message)
+        {
+            failed = true;
+            errorMessage = message;
+        }
+
+        async Task ErrorAction(string message)
+        {
+            ErrorDialog.Title = "Mixer operation failed";
+            ErrorDialog.Content = message;
+            await ErrorDialog.ShowAsync();
+        }
     }
 
-    private void GoBack(object sender, RoutedEventArgs e)
+    private async void GoBack(object sender, RoutedEventArgs e)
     {
+        await mixer.Cancel();
         var transition = new SlideNavigationTransitionInfo
         {
             Effect = SlideNavigationTransitionEffect.FromLeft
