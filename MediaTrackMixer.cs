@@ -6,10 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using WinUIShared.Helpers;
 
 namespace MediaTrackMixerPage
 {
-    public class MediaTrackMixer(string ffmpegPath)
+    public class MediaTrackMixer(string ffmpegPath) : Processor(ffmpegPath)
     {
         public async Task<List<TrackGroup>> GetTracks(string[] inputs)
         {
@@ -22,7 +23,7 @@ namespace MediaTrackMixerPage
             var attachmentDictionary = new Dictionary<int, Attachment>();
             var currentlyProcessed = GeneralType.None;
 
-            await StartProcess(ffmpegPath, inputArgs, null, (sender, args) =>
+            await StartFfmpegProcess(inputArgs, (sender, args) =>
             {
                 if (string.IsNullOrWhiteSpace(args.Data)) return;
                 Debug.WriteLine(args.Data);
@@ -139,23 +140,18 @@ namespace MediaTrackMixerPage
             return trackGroups;
         }
 
-        public async Task Mix(List<TrackGroup> tracks, string output, List<Map> maps, int? globalMetadataInputIndex = null, bool isExtractingAttachment = false, IProgress<double>? progress = null)
+        public async Task Mix(List<TrackGroup> tracks, string output, List<Map> maps, IProgress<double> progress, Action<string> error, bool isExtractingAttachment = false)
         {
-            var failure = false;
             if (isExtractingAttachment)
             {
                 File.Delete(output);
-                await StartProcess(ffmpegPath, $"-dump_attachment:{maps[0].TrackIndex} \"{output}\" -i \"{tracks[0].Path}\"", null, (sender, args) =>
+                await StartFfmpegProcess($"-dump_attachment:{maps[0].TrackIndex} \"{output}\" -i \"{tracks[0].Path}\"", (sender, args) =>
                 {
                     if (string.IsNullOrWhiteSpace(args.Data)) return;
+                    if (CheckFileNameLongErrorSplit(args.Data, error)) return;
                     //Debug.WriteLine(args.Data);
-                    if (HasError(args.Data))
-                    {
-                        failure = true;
-                    }
+                    if (HasError(args.Data, error)) return;
                 });
-                if (failure) throw new Exception("The operation failed");
-                progress?.Report(100);
                 return;
             }
 
@@ -198,29 +194,29 @@ namespace MediaTrackMixerPage
             foreach (var map in maps)
             {
                 if (tracks.Count <= map.InputIndex)
-                    throw new ArgumentException(
-                        $"You mapped to a track that does not exist. Input index: {map.InputIndex}");
+                {
+                    error($"You mapped to a track that does not exist. Input index: {map.InputIndex}");
+                    return;
+                }
                 var trackDuration = tracks[map.InputIndex].Duration;
                 if (totalDuration < trackDuration) totalDuration = trackDuration;
             }
 
             File.Delete(output);
-            await StartProcess(ffmpegPath, $"{inputArgs} -c:v copy {audioEncode} {subtitleEncode} {disableDefaultMappingFromFirstInput} {mapTrackArgs} {mapMetadataArgs} -max_interleave_delta 0 \"{output}\"", null, (sender, args) =>
+            await StartFfmpegProcess($"{inputArgs} -c:v copy {audioEncode} {subtitleEncode} {disableDefaultMappingFromFirstInput} {mapTrackArgs} {mapMetadataArgs} -max_interleave_delta 0 \"{output}\"", (sender, args) =>
             {
                 if (string.IsNullOrWhiteSpace(args.Data)) return;
                 Debug.WriteLine(args.Data);
-                if (HasError(args.Data))
-                {
-                    failure = true;
-                    return;
-                }
-                if (progress == null) return;
+                if (HasError(args.Data, error)) return;
+                if (CheckFileNameLongErrorSplit(args.Data, error)) return;
+                if (!args.Data.StartsWith("frame") && !args.Data.StartsWith("size")) return;
+                if (CheckNoSpaceDuringMerge(args.Data, error)) return;
                 var matchCollection = Regex.Matches(args.Data, @"^(?:frame|size)=\s*.+?time=(\d{2}:\d{2}:\d{2}\.\d{2}).+");
                 if (matchCollection.Count == 0) return;
                 progress.Report(TimeSpan.Parse(matchCollection[0].Groups[1].Value) / totalDuration * 100);
             });
-            if (failure) throw new Exception("The operation failed");
-            progress?.Report(100);
+            progress.Report(100);
+            outputFile = output;
         }
 
         public (string name, string ext) GetFileNameAndExtension(string fileNameWithExtension)
@@ -230,9 +226,17 @@ namespace MediaTrackMixerPage
             return (name, ext);
         }
 
-        private bool HasError(string line) => line == "Conversion failed!"
-                                                || line.StartsWith("Error initializing the muxer")
-                                                || line.StartsWith("Error opening output file");
+        private bool HasError(string line, Action<string> error)
+        {
+            if(line == "Conversion failed!"
+                    || line.StartsWith("Error initializing the muxer")
+                    || line.StartsWith("Error opening output file"))
+            {
+                error($"An error occurred while extracting attachment\n\n{line}");
+                return true;
+            }
+            return false;
+        }
 
         private static TrackType GetTrackType(string type) => type switch
         {
@@ -241,29 +245,6 @@ namespace MediaTrackMixerPage
             "Subtitle" => TrackType.Subtitle,
             _ => TrackType.Other
         };
-
-        private static async Task StartProcess(string processFileName, string arguments, DataReceivedEventHandler? outputEventHandler, DataReceivedEventHandler? errorEventHandler)
-        {
-            Process ffmpeg = new()
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = processFileName,
-                    Arguments = arguments,
-                    CreateNoWindow = true,
-                    RedirectStandardError = true,
-                    RedirectStandardOutput = true,
-                },
-                EnableRaisingEvents = true
-            };
-            ffmpeg.OutputDataReceived += outputEventHandler;
-            ffmpeg.ErrorDataReceived += errorEventHandler;
-            ffmpeg.Start();
-            ffmpeg.BeginErrorReadLine();
-            ffmpeg.BeginOutputReadLine();
-            await ffmpeg.WaitForExitAsync();
-            ffmpeg.Dispose();
-        }
 
         public enum TrackType{ Other, Video, Audio, Subtitle }
         public enum GeneralType{ None, Track, Chapters, Attachment, GlobalMetadata }
