@@ -210,7 +210,7 @@ namespace MediaTrackMixerPage
                 if (HasError(args.Data, error)) return;
                 if (CheckFileNameLongErrorSplit(args.Data, error)) return;
                 if (!args.Data.StartsWith("frame") && !args.Data.StartsWith("size")) return;
-                if (CheckNoSpaceDuringMerge(args.Data, error)) return;
+                if (CheckNoSpaceDuringProcess(args.Data, error)) return;
                 var matchCollection = Regex.Matches(args.Data, @"^(?:frame|size)=\s*.+?time=(\d{2}:\d{2}:\d{2}\.\d{2}).+");
                 if (matchCollection.Count == 0) return;
                 progress.Report(TimeSpan.Parse(matchCollection[0].Groups[1].Value) / totalDuration * 100);
