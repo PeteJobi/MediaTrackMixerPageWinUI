@@ -140,17 +140,18 @@ namespace MediaTrackMixerPage
             return trackGroups;
         }
 
-        public async Task Mix(List<TrackGroup> tracks, string output, List<Map> maps, IProgress<double> progress, Action<string> error, bool isExtractingAttachment = false)
+        public async Task Mix(List<TrackGroup> tracks, string output, List<Map> maps, bool isExtractingAttachment = false)
         {
+            rightTextPrimary.Report("Mixing...");
             if (isExtractingAttachment)
             {
                 File.Delete(output);
                 await StartFfmpegProcess($"-dump_attachment:{maps[0].TrackIndex} \"{output}\" -i \"{tracks[0].Path}\"", (sender, args) =>
                 {
                     if (string.IsNullOrWhiteSpace(args.Data)) return;
-                    if (CheckFileNameLongErrorSplit(args.Data, error)) return;
+                    if (CheckFileNameLongError(args.Data)) return;
                     //Debug.WriteLine(args.Data);
-                    if (HasError(args.Data, error)) return;
+                    if (HasError(args.Data)) return;
                 });
                 return;
             }
@@ -187,7 +188,7 @@ namespace MediaTrackMixerPage
                     subtitleEncode = "-c:s mov_text";
                     break;
                 case ".mp3":
-                    audioEncode = string.Empty;
+                    audioEncode = "-c:a libmp3lame";
                     break;
             }
             var totalDuration = TimeSpan.MinValue;
@@ -207,15 +208,18 @@ namespace MediaTrackMixerPage
             {
                 if (string.IsNullOrWhiteSpace(args.Data)) return;
                 Debug.WriteLine(args.Data);
-                if (HasError(args.Data, error)) return;
-                if (CheckFileNameLongErrorSplit(args.Data, error)) return;
+                if (HasError(args.Data)) return;
+                if (CheckFileNameLongError(args.Data)) return;
                 if (!args.Data.StartsWith("frame") && !args.Data.StartsWith("size")) return;
-                if (CheckNoSpaceDuringProcess(args.Data, error)) return;
+                if (CheckNoSpaceDuringProcess(args.Data)) return;
                 var matchCollection = Regex.Matches(args.Data, @"^(?:frame|size)=\s*.+?time=(\d{2}:\d{2}:\d{2}\.\d{2}).+");
                 if (matchCollection.Count == 0) return;
-                progress.Report(TimeSpan.Parse(matchCollection[0].Groups[1].Value) / totalDuration * 100);
+                var progressPercent = TimeSpan.Parse(matchCollection[0].Groups[1].Value) / totalDuration * ProgressMax;
+                progressPrimary.Report(progressPercent);
+                centerTextPrimary.Report($"{Math.Round(progressPercent, 2)} %");
             });
-            progress.Report(100);
+            progressPrimary.Report(100);
+            centerTextPrimary.Report("100 %");
             outputFile = output;
         }
 
@@ -226,7 +230,7 @@ namespace MediaTrackMixerPage
             return (name, ext);
         }
 
-        private bool HasError(string line, Action<string> error)
+        private bool HasError(string line)
         {
             if(line == "Conversion failed!"
                     || line.StartsWith("Error initializing the muxer")
