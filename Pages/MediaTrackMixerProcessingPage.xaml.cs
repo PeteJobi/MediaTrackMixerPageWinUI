@@ -181,54 +181,12 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
         var file = await fileSaver.PickSaveFileAsync();
         if (file == null) return;
 
-        viewModel.State = OperationState.DuringOperation;
-        ProcessProgress.ProgressPrimary = 0;
-        ProcessProgress.RightTextPrimary = "0.0%";
 
         var maps = GetMaps();
-        var progress = new Progress<double>(progress =>
-        {
-            ProcessProgress.ProgressPrimary = progress;
-            ProcessProgress.RightTextPrimary = $"{Math.Round(progress, 2)}%";
-        });
-        var failed = false;
-        string? errorMessage = null;
-        try
-        {
-            var isExtractingAttachment = viewModel.Tracks is [{ Type: TrackType.Attachment }]; //Meaning: viewModel.Tracks.Count == 1 && viewModel.Tracks[0].Type == TrackType.Attachment;
-            await mixer.Mix(mixerTracks, file.Path, maps, progress, ErrorActionFromFfmpeg, isExtractingAttachment);
-
-            if (viewModel.State == OperationState.BeforeOperation) return; //Canceled
-            if (failed)
-            {
-                viewModel.State = OperationState.BeforeOperation;
-                await ErrorAction(errorMessage!);
-                await mixer.Cancel();
-                return;
-            }
-
-            viewModel.State = OperationState.AfterOperation;
-            ProcessProgress.RightTextPrimary = "Done";
-            outputFile = file.Path;
-        }
-        catch (Exception ex)
-        {
-            await ErrorAction(ex.Message);
-            viewModel.State = OperationState.BeforeOperation;
-        }
-
-        void ErrorActionFromFfmpeg(string message)
-        {
-            failed = true;
-            errorMessage = message;
-        }
-
-        async Task ErrorAction(string message)
-        {
-            ErrorDialog.Title = "Mixer operation failed";
-            ErrorDialog.Content = message;
-            await ErrorDialog.ShowAsync();
-        }
+        var isExtractingAttachment = viewModel.Tracks is [{ Type: TrackType.Attachment }]; //Meaning: viewModel.Tracks.Count == 1 && viewModel.Tracks[0].Type == TrackType.Attachment;
+        var processTask = mixer.Mix(mixerTracks, file.Path, maps, isExtractingAttachment);
+        outputFile = null;
+        outputFile = await ProcessManager.StartProcess(processTask);
     }
 
     private async void GoBack(object sender, RoutedEventArgs e)

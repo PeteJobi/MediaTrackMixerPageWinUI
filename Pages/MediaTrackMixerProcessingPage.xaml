@@ -11,7 +11,6 @@
     mc:Ignorable="d">
 
     <Page.Resources>
-        <converters:BoolToObjectConverter x:Key="MixingOrDoneConverter" TrueValue="Mixing..." FalseValue="Done"/>
         <converters:BoolNegationConverter x:Key="BoolNegationConverter" />
     </Page.Resources>
 
@@ -43,9 +42,7 @@
                     </StackPanel>
                 </Button>
             </StackPanel>
-            <controls:ProcessProgress x:Name="ProcessProgress" State="{x:Bind viewModel.State, Mode=TwoWay}" Processor="{x:Bind mixer}"
-                                      LeftTextPrimary="{x:Bind viewModel.AfterOperation, Mode=OneWay, Converter={StaticResource MixingOrDoneConverter}, ConverterParameter=True}"
-                                      OnlyPrimary="True"/>
+            <controls:ProcessManager x:Name="ProcessManager" State="{x:Bind viewModel.State, Mode=TwoWay}" Processor="{x:Bind mixer}" OnlyPrimary="True"/>
         </StackPanel>
         <ContentDialog Name="ErrorDialog" IsPrimaryButtonEnabled="True" PrimaryButtonText="Ok"/>
     </RelativePanel>
