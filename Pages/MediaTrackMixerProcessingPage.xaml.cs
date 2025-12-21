@@ -184,9 +184,8 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
 
         var maps = GetMaps();
         var isExtractingAttachment = viewModel.Tracks is [{ Type: TrackType.Attachment }]; //Meaning: viewModel.Tracks.Count == 1 && viewModel.Tracks[0].Type == TrackType.Attachment;
-        var processTask = mixer.Mix(mixerTracks, file.Path, maps, isExtractingAttachment);
         outputFile = null;
-        outputFile = await ProcessManager.StartProcess(processTask);
+        outputFile = await ProcessManager.StartProcess(mixer.Mix(mixerTracks, file.Path, maps, isExtractingAttachment));
     }
 
     private async void GoBack(object sender, RoutedEventArgs e)
