@@ -8,10 +8,16 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:WinUIShared.Controls"
     xmlns:converters="using:CommunityToolkit.WinUI.Converters"
+    xmlns:resources="using:MediaTrackMixer.Resources"
     mc:Ignorable="d">
 
     <Page.Resources>
-        <converters:BoolNegationConverter x:Key="BoolNegationConverter" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <resources:Template/>
+            </ResourceDictionary.MergedDictionaries>
+            <converters:BoolNegationConverter x:Key="BoolNegationConverter" />
+        </ResourceDictionary>
     </Page.Resources>
 
     <RelativePanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10">

@@ -44,10 +44,14 @@ public sealed partial class MediaTrackMixerMainPage : Page
         ("Red", false),
         ("DarkMagenta", false),
     ];
+    private BindingProxy globalProxy;
+    public const string GlobalBindingProxyKey = "GlobalBindingProxy";
     public MediaTrackMixerMainPage()
     {
         InitializeComponent();
         _mainModel = new MainModel{ TrackGroups = new ObservableCollection<TrackGroup>() };
+        globalProxy = new BindingProxy();
+        Application.Current.Resources.Add(GlobalBindingProxyKey, globalProxy);
     }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -83,41 +87,81 @@ public sealed partial class MediaTrackMixerMainPage : Page
         {
             var (background, hasBlackForeground) = colours[i++ % colours.Length];
             var colour = new Colour { Background = background, HasBlackForeground = hasBlackForeground };
-            var tracks = t.Tracks.Select(s => new Track
+            var tracks = t.Tracks.Select(s =>
             {
-                FullPath = t.Path,
-                Title = s.Title,
-                CodecOrMimeType = s.Codec,
-                Index = s.Index,
-                Type = Track.ProcessorToModelTrackType(s.Type),
-                Colour = colour,
-                FileName = Path.GetFileName(t.Path)
-            }).Concat(t.Attachments.Select(s => new Track
+                var track = new Track
+                {
+                    FullPath = t.Path,
+                    CodecOrMimeType = s.Codec,
+                    Index = s.Index,
+                    Type = Track.ProcessorToModelTrackType(s.Type),
+                    Colour = colour,
+                    FileName = Path.GetFileName(t.Path),
+                    PassedDefault = new PassedDefault(),
+                    BindingProxy = globalProxy
+                };
+                track.PassedTitle = new PassedTitle(track.Type);
+                track.Data = new TrackEdit(new MetadataEdit(
+                        s.Metadata.Select(m => new MetadataItem(m.Key, m.Value)), track.PassedTitle),
+                    GetDispositionItems(s.Dispositions), track.PassedDefault, new SyncEdit(track.Type));
+                return track;
+            }).Concat(t.Attachments.Select(s =>
             {
-                FullPath = t.Path,
-                Title = s.Name,
-                CodecOrMimeType = s.MimeType,
-                Index = s.Index,
-                Type = TrackType.Attachment,
-                Colour = colour,
-                FileName = Path.GetFileName(t.Path)
+                var mimetypeKey = "mimetype";
+                var track = new Track
+                {
+                    FullPath = t.Path,
+                    CodecOrMimeType = s.Metadata.First(m => m.Key == mimetypeKey).Value,
+                    Index = s.Index,
+                    Type = TrackType.Attachment,
+                    Colour = colour,
+                    FileName = Path.GetFileName(t.Path),
+                    PassedDefault = new PassedDefault(),
+                    BindingProxy = globalProxy
+                };
+                track.PassedTitle = new PassedTitle(track.Type);
+                var attMetadata = new MetadataEdit(
+                    s.Metadata.Select(m => new MetadataItem(m.Key, m.Value)), track.PassedTitle);
+                attMetadata.First(m => m.Key == mimetypeKey).CantEdit = true;
+                track.Data = new TrackEdit(attMetadata, GetDispositionItems(s.Dispositions), track.PassedDefault, new SyncEdit(track.Type));
+                return track;
             })).ToList();
-            if(t.Chapters.Count > 0) tracks.Add(new Track
+            if(t.Chapters.Count > 0)
             {
-                Type = TrackType.Chapters,
-                Title = $"{t.Chapters.Count} chapters",
-                Colour = colour,
-                FileName = Path.GetFileName(t.Path),
-                FullPath = t.Path
-            });
-            tracks.Add(new Track
+                var chapter = new Track
+                {
+                    Type = TrackType.Chapters,
+                    Colour = colour,
+                    FileName = Path.GetFileName(t.Path),
+                    FullPath = t.Path,
+                    PassedDefault = new PassedDefault(),
+                    BindingProxy = globalProxy
+                };
+                chapter.PassedTitle = new PassedTitle(chapter.Type); //This title shows number of chapters
+                chapter.Data = new ChaptersEdit(t.Chapters.Select(c =>
+                {
+                    var individualTitle = new PassedTitle(TrackType.Chapters);
+                    return new ChapterEdit(new MetadataEdit(
+                            c.Metadata.Select(m => new MetadataItem(m.Key, m.Value)), individualTitle), individualTitle)
+                    {
+                        Start = c.Start, End = c.End
+                    };
+                }), chapter.PassedTitle);
+                tracks.Add(chapter);
+            }
+            var globalMetadataTrack = new Track
             {
-                Title = t.GlobalMetadataTitle,
                 Type = TrackType.GlobalMetadata,
                 Colour = colour,
                 FileName = Path.GetFileName(t.Path),
-                FullPath = t.Path
-            });
+                FullPath = t.Path,
+                PassedDefault = new PassedDefault(), //Not really used, but needed for IsDefault binding to be false
+                BindingProxy = globalProxy
+            };
+            globalMetadataTrack.PassedTitle = new PassedTitle(globalMetadataTrack.Type);
+            globalMetadataTrack.Data = new MetadataEdit(t.GlobalMetadata.Select(m => new MetadataItem(m.Key, m.Value)),
+                globalMetadataTrack.PassedTitle);
+            tracks.Add(globalMetadataTrack);
             return new TrackGroup(tracks)
             {
                 FileName = Path.GetFileName(t.Path),
@@ -129,6 +173,37 @@ public sealed partial class MediaTrackMixerMainPage : Page
         CollectionViewSourcee.Source = _mainModel.TrackGroups;
         ListVieww.ItemsSource = CollectionViewSourcee.View;
 
+        static ObservableCollection<DispositionItem> GetDispositionItems(List<string> selectedDispositions)
+        {
+            var allDispositions = new List<string>
+            {
+                "default",
+                "dub",
+                "original",
+                "comment",
+                "lyrics",
+                "karaoke",
+                "forced",
+                "hearing_impaired",
+                "visual_impaired",
+                "clean_effects",
+                "attached_pic",
+                "timed_thumbnails",
+                "non_diegetic",
+                "captions",
+                "descriptions",
+                "metadata",
+                "dependent",
+                "still_image",
+                "multilayer",
+            };
+
+            return new ObservableCollection<DispositionItem>(allDispositions.Select(d => new DispositionItem
+            {
+                Key = d,
+                Checked = selectedDispositions.Contains(d)
+            }));
+        }
     }
 
     private void TrackSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -230,6 +305,7 @@ public sealed partial class MediaTrackMixerMainPage : Page
         var transition = new SlideNavigationTransitionInfo();
         transition.Effect = SlideNavigationTransitionEffect.FromRight;
         var selectedTracks = ListVieww.SelectedItems.Cast<Track>().ToList();
+
         Frame.Navigate(typeof(MediaTrackMixerProcessingPage), new
         {
             Tracks = selectedTracks.Where(t => t.Type != TrackType.Other).ToList(),

@@ -35,11 +35,14 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
     private MediaTrackMixer mixer;
     private string? outputFile;
     private List<MediaTrackMixer.TrackGroup> mixerTracks;
+    private BindingProxy globalProxy;
 
     public MediaTrackMixerProcessingPage()
     {
         InitializeComponent();
         viewModel = new ProcessingPageModel { Tracks = [] };
+        globalProxy = (BindingProxy)Application.Current.Resources["GlobalBindingProxy"];
+        globalProxy.OnSecondPage = true;
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -51,10 +54,6 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
             Tracks = new ObservableCollection<Track>((List<Track>)obj.Tracks)
         };
         mixerTracks = obj.MixerTracks;
-        foreach (var track in viewModel.Tracks)
-        {
-            track.OnSecondPage = true;
-        }
         base.OnNavigatedTo(e);
     }
 
@@ -88,10 +87,10 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
                     break;
                 case TrackType.Attachment:
                     containsAttachments = true;
-                    (attachmentName, attachmentExtension) = track.Title?.Contains('.') == true 
-                        ? mixer.GetFileNameAndExtension(track.Title)
-                            : !string.IsNullOrWhiteSpace(track.Title)
-                                ? (track.Title, ".file") 
+                    (attachmentName, attachmentExtension) = track.PassedTitle.Title?.Contains('.') == true 
+                        ? mixer.GetFileNameAndExtension(track.PassedTitle.Title)
+                            : !string.IsNullOrWhiteSpace(track.PassedTitle.Title)
+                                ? (track.PassedTitle.Title, ".file") 
                                 : ("New attachment", ".file");
                     break;
                 default:
@@ -147,25 +146,41 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
         IEnumerable<string> FileTypeChoices(string type) => MediaTrackMixerMainPage.AllSupportedTypes.Where(t => t != type).Prepend(type);
     }
 
-    private List<MediaTrackMixer.Map> GetMaps() => viewModel.Tracks.Select(tr =>
+    private List<MediaTrackMixer.TrackMap> GetTrackMaps() => viewModel.Tracks.Where(tr => tr.Type is not (TrackType.Chapters or TrackType.GlobalMetadata))
+        .Select(tr =>
     {
         var inputIndex = mixerTracks.FindIndex(tg => tg.Path == tr.FullPath);
-        var trackIndex = tr.Type == TrackType.Chapters ? 0 : tr.Index;
+        var trackIndex = tr.Index;
         var type = Track.ModelToProcessorGeneralType(tr.Type);
-        var metadataReplacements = tr.Type switch
+        var trackEdit = (TrackEdit)tr.Data;
+        var metadata = trackEdit.Metadata.Select(m => new KeyValuePair<string, string>(m.Key, m.Value)).ToList();
+        var dispositions = trackEdit.Dispositions.Where(d => d.Checked).Select(d => d.Key).ToList();
+        var syncType = trackEdit.Sync.SelectedOption switch
         {
-            TrackType.Attachment => new Dictionary<string, string>
-            {
-                { "filename", tr.Title ?? string.Empty },
-                { "mimetype", tr.CodecOrMimeType ?? string.Empty }
-            },
-            _ => new Dictionary<string, string>
-            {
-                { "title", tr.Title ?? string.Empty }
-            },
+            SyncEdit.NoSync => MediaTrackMixer.SyncType.None,
+            SyncEdit.Delay => MediaTrackMixer.SyncType.Delay,
+            SyncEdit.Hasten => MediaTrackMixer.SyncType.Hasten,
+            _ => throw new ArgumentOutOfRangeException()
         };
-        return new MediaTrackMixer.Map(inputIndex, trackIndex, type, metadataReplacements);
+        var syncChange = trackEdit.Sync.Change;
+        return new MediaTrackMixer.TrackMap(tr.FullPath, trackIndex, type, metadata, dispositions, syncType, syncChange);
     }).ToList();
+
+    private (List<KeyValuePair<string, string>> globalMetadata, List<MediaTrackMixer.Chapter> chapters) GetGlobalData()
+    {
+        var globalMetadataEdit = viewModel.Tracks.Where(t => t.Type == TrackType.GlobalMetadata).Select(t => (MetadataEdit)t.Data);
+        var globalMetadata = globalMetadataEdit
+            .SelectMany(g => g.Select(m => new KeyValuePair<string, string>(m.Key, m.Value))).ToList();
+        List<MediaTrackMixer.Chapter> chapters = [];
+        var chaptersEdit = viewModel.Tracks.Where(t => t.Type == TrackType.Chapters).Select(t => (ChaptersEdit)t.Data);
+        chapters = chaptersEdit.SelectMany(c => c.Select(ch => new MediaTrackMixer.Chapter
+        {
+            Start = ch.Start,
+            End = ch.End,
+            Metadata = ch.Metadata.Select(m => new KeyValuePair<string, string>(m.Key, m.Value)).ToList()
+        })).ToList();
+        return (globalMetadata, chapters);
+    }
 
     private async void Save(object sender, RoutedEventArgs e)
     {
@@ -182,15 +197,21 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
         if (file == null) return;
 
 
-        var maps = GetMaps();
+        var trackMaps = GetTrackMaps();
+        var (globalMetadata, chapters) = GetGlobalData();
         var isExtractingAttachment = viewModel.Tracks is [{ Type: TrackType.Attachment }]; //Meaning: viewModel.Tracks.Count == 1 && viewModel.Tracks[0].Type == TrackType.Attachment;
         outputFile = null;
-        outputFile = await ProcessManager.StartProcess(mixer.Mix(mixerTracks, file.Path, maps, isExtractingAttachment));
+        var processTask = isExtractingAttachment
+            ? mixer.ExtractAttachment(trackMaps[0].Path, trackMaps[0].TrackIndex, file.Path)
+            : mixer.Mix(file.Path, globalMetadata, chapters, trackMaps);
+        outputFile = await ProcessManager.StartProcess(processTask);
+        //outputFile = await ProcessManager.StartProcess(mixer.Mix(mixerTracks, file.Path, globalMetadata, chapters, trackMaps, isExtractingAttachment));
     }
 
     private async void GoBack(object sender, RoutedEventArgs e)
     {
         await mixer.Cancel();
+        globalProxy.OnSecondPage = false;
         var transition = new SlideNavigationTransitionInfo
         {
             Effect = SlideNavigationTransitionEffect.FromLeft
