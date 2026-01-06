@@ -239,9 +239,8 @@ namespace MediaTrackMixerPage
             MatchCollection matchCollection;
 
             File.Delete(output);
-            await StartProcess(ffmpegPath,
-                $"{inputArgs} {metadataFileArgs} {audioEncode} {subtitleEncode} {globalDataMapArgs} {mapArgs} {metadataMapArgs} {dispositionArgs} -max_interleave_delta 0 -c:v copy \"{output}\"",
-                null, (sender, args) =>
+            await StartFfmpegProcess($"{inputArgs} {metadataFileArgs} {audioEncode} {subtitleEncode} {globalDataMapArgs} {mapArgs} {metadataMapArgs} {dispositionArgs} -max_interleave_delta 0 -c:v copy \"{output}\"",
+                (sender, args) =>
                 {
                     if (string.IsNullOrWhiteSpace(args.Data)) return;
                     Debug.WriteLine(args.Data);
@@ -266,8 +265,7 @@ namespace MediaTrackMixerPage
                     matchCollection = Regex.Matches(args.Data,
                         @"^(?:frame|size)=\s*.+?time=(\d{2}:\d{2}:\d{2}\.\d{2}).+");
                     if (matchCollection.Count == 0) return;
-                    var progressPercent = TimeSpan.Parse(matchCollection[0].Groups[1].Value) / totalDuration *
-                                          ProgressMax;
+                    var progressPercent = TimeSpan.Parse(matchCollection[0].Groups[1].Value) / totalDuration * ProgressMax;
                     progressPrimary.Report(progressPercent);
                     centerTextPrimary.Report($"{Math.Round(progressPercent, 2)} %");
                 }, async process =>

@@ -410,11 +410,7 @@ public class BindingProxy : DependencyObject
 {
     public bool OnSecondPage
     {
-        get
-        {
-            var newVal = (bool)GetValue(DataProperty);
-            return newVal;
-        }
+        get => (bool)GetValue(DataProperty);
         set => SetValue(DataProperty, value);
     }
 
