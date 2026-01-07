@@ -45,7 +45,7 @@ public sealed partial class MediaTrackMixerMainPage : Page
         ("DarkMagenta", false),
     ];
     private BindingProxy globalProxy;
-    public const string GlobalBindingProxyKey = "GlobalBindingProxy";
+    public const string GlobalBindingProxyKey = "MixerGlobalBindingProxy";
     public MediaTrackMixerMainPage()
     {
         InitializeComponent();

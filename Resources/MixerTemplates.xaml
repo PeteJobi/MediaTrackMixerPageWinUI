@@ -285,16 +285,16 @@
     <DataTemplate x:Key="MetadataItem" x:DataType="viewModels:MetadataItem">
         <Grid ColumnDefinitions="2*, Auto, 3*, Auto">
             <TextBlock VerticalAlignment="Center" Text="{x:Bind Key, Mode=OneWay}" TextTrimming="CharacterEllipsis"
-                       Visibility="{Binding Source={StaticResource GlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToNegatedVisibilityConverter}}"
+                       Visibility="{Binding Source={StaticResource MixerGlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToNegatedVisibilityConverter}}"
                        FontSize="{StaticResource SmallFontSize}" TextAlignment="Right"/>
             <TextBox Text="{x:Bind Key, Mode=TwoWay}" Style="{StaticResource SmallTextBox}" TextAlignment="Right" IsEnabled="{x:Bind CantEdit, Converter={StaticResource BoolNegationConverter}}"
-                     Visibility="{Binding Source={StaticResource GlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                     Visibility="{Binding Source={StaticResource MixerGlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToVisibilityConverter}}"/>
             <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="5,0">:</TextBlock>
             <TextBlock Grid.Column="2" VerticalAlignment="Center" Text="{x:Bind Value, Mode=OneWay}" TextTrimming="CharacterEllipsis" FontSize="{StaticResource SmallFontSize}"
-                       Visibility="{Binding Source={StaticResource GlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToNegatedVisibilityConverter}}" />
+                       Visibility="{Binding Source={StaticResource MixerGlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToNegatedVisibilityConverter}}" />
             <TextBox Grid.Column="2" Text="{x:Bind Value, Mode=TwoWay}" Style="{StaticResource SmallTextBox}" IsEnabled="{x:Bind CantEdit, Converter={StaticResource BoolNegationConverter}}"
-                     Visibility="{Binding Source={StaticResource GlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToVisibilityConverter}}" />
-            <Button Grid.Column="3" Visibility="{Binding Source={StaticResource GlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToVisibilityConverter}}"
+                     Visibility="{Binding Source={StaticResource MixerGlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Button Grid.Column="3" Visibility="{Binding Source={StaticResource MixerGlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToVisibilityConverter}}"
                     Command="{Binding DataContext.DeleteItemCommand, ElementName=ItemsList}" CommandParameter="{Binding}" Height="{StaticResource SmallHeight}"
                     Margin="5,0,0,0" IsEnabled="{x:Bind CantEdit, Converter={StaticResource BoolNegationConverter}}" ToolTipService.ToolTip="Remove entry">
                 <SymbolIcon Symbol="Clear"/>
@@ -313,7 +313,7 @@
                 </ListView.ItemContainerStyle>
             </ListView>
             <Button Grid.Row="2" Width="100" HorizontalAlignment="Center" Click="AddMetadata" Height="{StaticResource SmallHeight}" ToolTipService.ToolTip="Add entry"
-                    Visibility="{Binding Source={StaticResource GlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToVisibilityConverter}}">
+                    Visibility="{Binding Source={StaticResource MixerGlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToVisibilityConverter}}">
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <SymbolIcon Symbol="Add" />
                 </StackPanel>
@@ -329,14 +329,14 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <ContentPresenter Content="{x:Bind Metadata}" ContentTemplate="{StaticResource MetadataTemplate}"/>
-            <Grid Grid.Row="1" Visibility="{Binding Source={StaticResource GlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToNegatedVisibilityConverter}}">
+            <Grid Grid.Row="1" Visibility="{Binding Source={StaticResource MixerGlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToNegatedVisibilityConverter}}">
                 <Grid RowDefinitions="Auto, Auto" RowSpacing="5" Visibility="{x:Bind DispositionLength, Mode=OneWay, Converter={StaticResource DoubleToVisibilityConverter}}">
                     <TextBlock Style="{ThemeResource EditTitle}">Disposition</TextBlock>
                     <TextBlock Grid.Row="1" Text="{x:Bind DispositionString, Mode=OneWay}" FontSize="{StaticResource SmallFontSize}" TextAlignment="Center"/>
                 </Grid>
             </Grid>
             <Grid Grid.Row="1" RowDefinitions="Auto, Auto" RowSpacing="5"
-                  Visibility="{Binding Source={StaticResource GlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToVisibilityConverter}}">
+                  Visibility="{Binding Source={StaticResource MixerGlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToVisibilityConverter}}">
                 <TextBlock Style="{ThemeResource EditTitle}">Disposition</TextBlock>
                 <ItemsRepeater Grid.Row="1" ItemsSource="{x:Bind Dispositions}">
                     <ItemsRepeater.Layout>
@@ -350,7 +350,7 @@
                     </ItemsRepeater.ItemTemplate>
                 </ItemsRepeater>
             </Grid>
-            <Grid Grid.Row="2" Visibility="{Binding Source={StaticResource GlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Grid Grid.Row="2" Visibility="{Binding Source={StaticResource MixerGlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Grid RowDefinitions="Auto, Auto" RowSpacing="5" Visibility="{x:Bind Sync.Type, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=True}">
                     <TextBlock Style="{ThemeResource EditTitle}">Sync</TextBlock>
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
@@ -412,7 +412,7 @@
             </Grid.Resources>
             <TextBlock Style="{ThemeResource EditTitle}">Chapters</TextBlock>
             <ListView x:Name="ItemsList" Grid.Row="1" ItemsSource="{x:Bind}" SelectionMode="None"
-                      ItemTemplate="{Binding Source={StaticResource GlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource ChapTemplateConverter}}">
+                      ItemTemplate="{Binding Source={StaticResource MixerGlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource ChapTemplateConverter}}">
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
                         <Setter Property="MinHeight" Value="30"/>
@@ -420,7 +420,7 @@
                 </ListView.ItemContainerStyle>
             </ListView>
             <Button Grid.Row="2" Width="100" HorizontalAlignment="Center" Click="AddChapter" Height="{StaticResource SmallHeight}" ToolTipService.ToolTip="Add entry"
-                    Visibility="{Binding Source={StaticResource GlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToVisibilityConverter}}">
+                    Visibility="{Binding Source={StaticResource MixerGlobalBindingProxy}, Path=OnSecondPage, Converter={StaticResource BoolToVisibilityConverter}}">
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <SymbolIcon Symbol="Add" />
                 </StackPanel>

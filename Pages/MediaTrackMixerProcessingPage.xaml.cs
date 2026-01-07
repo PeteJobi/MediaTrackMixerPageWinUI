@@ -41,7 +41,7 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
     {
         InitializeComponent();
         viewModel = new ProcessingPageModel { Tracks = [] };
-        globalProxy = (BindingProxy)Application.Current.Resources["GlobalBindingProxy"];
+        globalProxy = (BindingProxy)Application.Current.Resources[MediaTrackMixerMainPage.GlobalBindingProxyKey];
         globalProxy.OnSecondPage = true;
     }
 
