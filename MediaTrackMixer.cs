@@ -245,7 +245,6 @@ namespace MediaTrackMixerPage
                     if (string.IsNullOrWhiteSpace(args.Data)) return;
                     Debug.WriteLine(args.Data);
                     if (HasError(args.Data)) return;
-                    if (CheckFileNameLongError(args.Data)) return;
                     if (durationsFound < maps.Count && args.Data.StartsWith("  Duration:"))
                     {
                         matchCollection = Regex.Matches(args.Data, @"\s*Duration:\s(\d{2}:\d{2}:\d{2}\.\d{2}).+");
@@ -326,7 +325,6 @@ namespace MediaTrackMixerPage
             await StartFfmpegProcess($"-dump_attachment:{attachmentTrackIndex} \"{output}\" -i \"{input}\"", (sender, args) =>
             {
                 if (string.IsNullOrWhiteSpace(args.Data)) return;
-                if (CheckFileNameLongError(args.Data)) return;
                 Debug.WriteLine(args.Data);
                 HasError(args.Data);
             });
