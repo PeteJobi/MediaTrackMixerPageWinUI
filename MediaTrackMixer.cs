@@ -10,7 +10,7 @@ using WinUIShared.Helpers;
 
 namespace MediaTrackMixerPage
 {
-    public class MediaTrackMixer(string ffmpegPath) : Processor(ffmpegPath)
+    public class MediaTrackMixer(string ffmpegPath) : Processor(ffmpegPath, new FileLogger.FileLogger($"{nameof(ReelBox)}/Mix"))
     {
         public async Task<List<TrackGroup>> GetTracks(string[] inputs)
         {
@@ -244,6 +244,7 @@ namespace MediaTrackMixerPage
                 {
                     if (string.IsNullOrWhiteSpace(args.Data)) return;
                     Debug.WriteLine(args.Data);
+                    logger.Log(args.Data);
                     if (HasError(args.Data)) return;
                     if (durationsFound < maps.Count && args.Data.StartsWith("  Duration:"))
                     {
@@ -326,6 +327,7 @@ namespace MediaTrackMixerPage
             {
                 if (string.IsNullOrWhiteSpace(args.Data)) return;
                 Debug.WriteLine(args.Data);
+                logger.Log(args.Data);
                 HasError(args.Data);
             });
             progressPrimary.Report(100);
