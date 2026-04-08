@@ -10,7 +10,7 @@ using WinUIShared.Helpers;
 
 namespace MediaTrackMixerPage
 {
-    public class MediaTrackMixer(string ffmpegPath) : Processor(ffmpegPath, new FileLogger.FileLogger($"{nameof(ReelBox)}/Mix"))
+    public class MediaTrackMixer(string ffmpegPath) : Processor(ffmpegPath, new FileLogger.FileLogger("ReelBox/Mix"))
     {
         public async Task<List<TrackGroup>> GetTracks(string[] inputs)
         {
