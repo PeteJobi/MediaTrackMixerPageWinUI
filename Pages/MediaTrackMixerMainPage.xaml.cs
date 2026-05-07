@@ -58,6 +58,7 @@ public sealed partial class MediaTrackMixerMainPage : Page
     {
         if (e.Parameter is MixerProps props)
         {
+            outputFiles.Clear();
             navigateTo = props.TypeToNavigateTo;
             ffmpegPath = props.FfmpegPath;
             mixer = new MediaTrackMixer(ffmpegPath);
