@@ -132,7 +132,7 @@ namespace MediaTrackMixerPage
 
                         break;
                     case FfOutputEnum.MetadataEntry:
-                        matchCollection = Regex.Matches(line, @"(.+?)\s*?: (.+)");
+                        matchCollection = Regex.Matches(line, @"(.+?)\s*?: (.*)");
                         if (matchCollection.Count == 0) return null;
                         result.Value = new KeyValuePair<string, string>(matchCollection[0].Groups[1].Value,
                             matchCollection[0].Groups[2].Value);
