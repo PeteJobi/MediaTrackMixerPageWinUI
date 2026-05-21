@@ -59,10 +59,11 @@ public sealed partial class MediaTrackMixerMainPage : Page
         if (e.Parameter is MixerProps props)
         {
             outputFiles.Clear();
+            _mainModel.TrackGroups.Clear();
             navigateTo = props.TypeToNavigateTo;
             ffmpegPath = props.FfmpegPath;
             mixer = new MediaTrackMixer(ffmpegPath);
-            await AddMedia(props.MediaPaths.ToArray());
+            await AddMedia(props.MediaPaths);
         }
 
         if (e.Parameter is string output && !outputFiles.Contains(output)) outputFiles.Add(output);
@@ -77,12 +78,12 @@ public sealed partial class MediaTrackMixerMainPage : Page
         var hwnd = Win32Interop.GetWindowFromWindowId(windowId.Value);
         WinRT.Interop.InitializeWithWindow.Initialize(filePicker, hwnd);
         var files = await filePicker.PickMultipleFilesAsync();
-        await AddMedia(files.Select(f => f.Path).ToArray());
+        await AddMedia(files.Select(f => f.Path));
     }
 
-    private async Task AddMedia(string[] inputs)
+    private async Task AddMedia(IEnumerable<string> inputs)
     {
-        mixerTracks = await mixer.GetTracks(inputs);
+        mixerTracks = await mixer.GetTracks(_mainModel.TrackGroups.Select(t => t.FullPath).Concat(inputs).ToArray());
         var i = 0;
         _mainModel.TrackGroups = new ObservableCollection<TrackGroup>(mixerTracks.Select(t =>
         {
@@ -262,7 +263,7 @@ public sealed partial class MediaTrackMixerMainPage : Page
         if (e.DataView.Contains(StandardDataFormats.StorageItems))
         {
             var items = await e.DataView.GetStorageItemsAsync();
-            await AddMedia(_mainModel.TrackGroups.Select(t => t.FullPath).Concat(items.Select(i => i.Path)).ToArray());
+            await AddMedia(items.Select(i => i.Path));
         }
     }
 
