@@ -255,7 +255,8 @@ public sealed partial class MediaTrackMixerMainPage : Page
 
     private void TrackGroupDeleted(object sender, RoutedEventArgs e)
     {
-        _mainModel.TrackGroups.Remove((sender as MenuFlyoutItem).DataContext as TrackGroup);
+        if (_mainModel.TrackGroups.Count > 1) _mainModel.TrackGroups.Remove((sender as MenuFlyoutItem).DataContext as TrackGroup);
+        else ReturnToNav();
     }
 
     private async void MainPage_OnDrop(object sender, DragEventArgs e)
@@ -299,7 +300,8 @@ public sealed partial class MediaTrackMixerMainPage : Page
 
     private void RemoveAllMedia(object sender, RoutedEventArgs e)
     {
-        _mainModel.TrackGroups.Clear();
+        if (navigateTo == null) _mainModel.TrackGroups.Clear();
+        else ReturnToNav();
     }
 
     private void GoToNextPage(object sender, RoutedEventArgs e)
@@ -316,10 +318,15 @@ public sealed partial class MediaTrackMixerMainPage : Page
         }, transition);
     }
 
+    private void ReturnToNav()
+    {
+        Frame.NavigateToType(Type.GetType(navigateTo), outputFiles, new FrameNavigationOptions { IsNavigationStackEnabled = false });
+    }
+
     private void GoBack(object sender, RoutedEventArgs e)
     {
         if (navigateTo == null) Frame.GoBack();
-        else Frame.NavigateToType(Type.GetType(navigateTo), outputFiles, new FrameNavigationOptions { IsNavigationStackEnabled = false });
+        else ReturnToNav();
     }
 }
 
