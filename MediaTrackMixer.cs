@@ -21,7 +21,7 @@ namespace MediaTrackMixerPage
             await StartFfmpegProcess(inputArgs, (sender, args) =>
             {
                 if (string.IsNullOrWhiteSpace(args.Data)) return;
-                Debug.WriteLine(args.Data);
+                logger.Log(args.Data);
                 if (args.Data.StartsWith(nameof(FfOutputEnum.Input)) && inputStartsAt == -1)
                     inputStartsAt = outputLines.Count;
                 if (args.Data.StartsWith(' ') || args.Data.StartsWith(nameof(FfOutputEnum.Input)))
