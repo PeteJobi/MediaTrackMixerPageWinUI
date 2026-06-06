@@ -111,7 +111,7 @@ namespace MediaTrackMixerPage
                         };
                         break;
                     case FfOutputEnum.Stream:
-                        matchCollection = Regex.Matches(line, @"Stream #(\d+):(\d+).*?: (\w+): (\w+).+?( \(\w+\))*$");
+                        matchCollection = Regex.Matches(line, @"Stream #(\d+):(\d+).*?: (\w+): (\w+).+?( \([ \w]+\))*$");
                         if (matchCollection.Count == 0) return null;
                         var streamType = matchCollection[0].Groups[3].Value;
                         var dispositions = matchCollection[0].Groups[5].Captures
