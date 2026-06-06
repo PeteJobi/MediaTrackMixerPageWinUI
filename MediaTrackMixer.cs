@@ -217,7 +217,7 @@ namespace MediaTrackMixerPage
             var dispositionArgs = string.Join(' ', maps.Select((trackMap, i) =>
             {
                 var dispParams = "0";
-                if (trackMap.Dispositions.Count > 0) dispParams = string.Join('+', trackMap.Dispositions);
+                if (trackMap.Dispositions.Count > 0) dispParams = string.Join('+', trackMap.Dispositions.Select(d => d.Replace(' ', '_')));
                 return $"-disposition:{i} {dispParams}";
             }));
 
