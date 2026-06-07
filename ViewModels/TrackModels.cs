@@ -48,7 +48,7 @@ public class Track : INotifyPropertyChanged
         TrackType.Audio => "\uE8D6",
         TrackType.Subtitle => "\uED1E",
         TrackType.Chapters => "\uE8F1",
-        TrackType.Attachment => MimeIsFont(CodecOrMimeType) ? "\uE8D2" : "\uE723",
+        TrackType.Attachment => MimeIcon(CodecOrMimeType),
         TrackType.GlobalMetadata => "\uE946",
         _ => "\uE9CE"
     };
@@ -58,7 +58,7 @@ public class Track : INotifyPropertyChanged
         TrackType.Audio => "Audio",
         TrackType.Subtitle => "Subtitle",
         TrackType.Chapters => "Chapters",
-        TrackType.Attachment => MimeIsFont(CodecOrMimeType) ? "Font" : "Attachment",
+        TrackType.Attachment => MimeToolTip(CodecOrMimeType),
         TrackType.GlobalMetadata => "Global Metadata",
         _ => "Unknown"
     };
@@ -81,7 +81,15 @@ public class Track : INotifyPropertyChanged
         _ => MediaTrackMixer.GeneralType.None
     };
 
-    private bool MimeIsFont(string? mimeType) => mimeType?.Contains("font") == true;
+    private string MimeIcon(string? mimeType) => 
+        mimeType?.StartsWith("font") == true ? "\uE8D2"
+            : mimeType?.StartsWith("image") == true ? "\uE91B"
+            : "\uE723";
+
+    private string MimeToolTip(string? mimeType) => 
+        mimeType?.StartsWith("font") == true ? "Font"
+            : mimeType?.StartsWith("image") == true ? "Image"
+            : "Attachment";
 }
 
 public class PassedTitle(TrackType type) : INotifyPropertyChanged

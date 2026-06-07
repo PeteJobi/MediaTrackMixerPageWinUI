@@ -70,6 +70,22 @@ namespace MediaTrackMixerPage
                     }).ToList()
                 };
             }).ToList();
+            foreach (var trackGroup in trackGroups)
+            {
+                if (Path.GetExtension(trackGroup.Path) != ".mkv") continue;
+                var insertCount = 0;
+                for (var i = 0; i < trackGroup.Tracks.Count; i++)
+                {
+                    var track = trackGroup.Tracks[i];
+                    if (track.Type != TrackType.Video || !track.Dispositions.Contains("attached pic")) continue;
+                    trackGroup.Tracks.RemoveAt(i--);
+                    trackGroup.Attachments.Insert(insertCount++, new Attachment(track.Index)
+                    {
+                        Dispositions = track.Dispositions,
+                        Metadata = track.Metadata
+                    });
+                }
+            }
             return trackGroups;
 
             List<FfOutputValueLeaf>? ParseOutputLines(FfOutputLeaf currentLeaf, int currentLine, int depth,
