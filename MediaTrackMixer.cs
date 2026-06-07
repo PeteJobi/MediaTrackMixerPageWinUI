@@ -191,8 +191,60 @@ namespace MediaTrackMixerPage
 
         public async Task Mix(string output, List<KeyValuePair<string, string>> globalMetadata, List<Chapter> chapters, List<TrackMap> maps)
         {
-            var pathAndSync = new List<(string path, SyncType syncType, TimeSpan syncChange)>();
+            //Image attachments have to be treated differently from other attachments. They need to be extracted as images first, then re-attached as attachments.
+            var pathToTempPathAndImage = new Dictionary<string, List<(int index, string tempPath, List<KeyValuePair<string, string>> metadata)>>();
+            var nonImageAttachmentCount = 0;
+            {
+                for (var i = 0; i < maps.Count; i++)
+                {
+                    var trackMap = maps[i];
+                    if (trackMap.Type != GeneralType.Attachment) continue;
+                    var mimetypeKvp = trackMap.Metadata.FirstOrDefault(m => m.Key == "mimetype");
+                    if (mimetypeKvp.Value?.StartsWith("image") != true)
+                    {
+                        nonImageAttachmentCount++;
+                        continue;
+                    }
+
+                    if (!pathToTempPathAndImage.TryGetValue(trackMap.Path, out var tempList))
+                    {
+                        tempList = [];
+                        pathToTempPathAndImage[trackMap.Path] = tempList;
+                    }
+
+                    tempList.Add((
+                        trackMap.TrackIndex,
+                        Path.Join(Path.GetTempPath(), $"{Path.GetRandomFileName()}.{mimetypeKvp.Value.Split("/").Last()}"),
+                        trackMap.Metadata));
+                    maps.RemoveAt(i--);
+                }
+
+                if (pathToTempPathAndImage.Count > 0)
+                {
+                    var inputsWithImageBuilder = new StringBuilder();
+                    var mapsAndOutputsBuilder = new StringBuilder();
+                    var n = 0;
+                    foreach (var (path, images) in pathToTempPathAndImage)
+                    {
+                        inputsWithImageBuilder.Append($"-i \"{path}\" ");
+                        var i = n++;
+                        mapsAndOutputsBuilder.Append(string.Join(' ', images.Select(t =>
+                            $"-map {i}:{t.index} -c copy -frames:v 1 \"{t.tempPath}\"")) + " ");
+                    }
+                    await StartFfmpegProcess($"{inputsWithImageBuilder} {mapsAndOutputsBuilder}", (sender, args) =>
+                    {
+                        if (string.IsNullOrWhiteSpace(args.Data)) return;
+                        Debug.WriteLine(args.Data);
+                        logger.Log(args.Data);
+                        HasError(args.Data);
+                    });
+                }
+            }
+
+
+            //For each Sync modification, create a new input with the modification applied.
             var trackToInputIndex = new Dictionary<TrackMap, int>();
+            var pathAndSync = new List<(string path, SyncType syncType, TimeSpan syncChange)>();
             foreach (var trackMap in maps)
             {
                 var ps = (trackMap.Path, trackMap.SyncType,
@@ -222,10 +274,19 @@ namespace MediaTrackMixerPage
             var metadataFileIndex = pathAndSync.Count;
             const string metadataFileArgs = "-f ffmetadata -i -";
 
+            var attachArgs = string.Join(' ', pathToTempPathAndImage.SelectMany(p =>
+                p.Value.Select(t =>
+                {
+                    var i = nonImageAttachmentCount; //New attachments are appended after existing attachments
+                    var attachmentMetadata = string.Join(' ',
+                        t.metadata.Select(m => $"-metadata:s:t:{i} {m.Key}=\"{m.Value}\""));
+                    nonImageAttachmentCount++;
+                    return $"-attach \"{t.tempPath}\" {attachmentMetadata}";
+                })));
+
             var mapArgs = string.Join(' ',
                 maps.Select(trackMap => $"-map {trackToInputIndex[trackMap]}:{trackMap.TrackIndex}"));
 
-            //var disableDefaultMappingFromFirstInput = "-map_metadata -1 -map_chapters -1"; //By default, ffmpeg maps the global metadata and chapters from the first input if there is no metadata file. These arguments disable that.
             var globalDataMapArgs =
                 "-map_metadata 1 -map_chapters 1"; //Copy globalmetadata and chapters from the metadata file.
             var metadataMapArgs =
@@ -256,7 +317,7 @@ namespace MediaTrackMixerPage
             MatchCollection matchCollection;
 
             File.Delete(output);
-            await StartFfmpegProcess($"{inputArgs} {metadataFileArgs} {audioEncode} {subtitleEncode} {globalDataMapArgs} {mapArgs} {metadataMapArgs} {dispositionArgs} -max_interleave_delta 0 -c:v copy \"{output}\"",
+            await StartFfmpegProcess($"{inputArgs} {metadataFileArgs} {attachArgs} {audioEncode} {subtitleEncode} {globalDataMapArgs} {mapArgs} {metadataMapArgs} {dispositionArgs} -max_interleave_delta 0 -c:v copy \"{output}\"",
                 (sender, args) =>
                 {
                     if (string.IsNullOrWhiteSpace(args.Data)) return;
@@ -295,6 +356,7 @@ namespace MediaTrackMixerPage
             progressPrimary.Report(100);
             centerTextPrimary.Report("100 %");
             outputFile = output;
+            DeleteTempFiles();
 
             string CreateMetadataFile()
             {
@@ -334,6 +396,21 @@ namespace MediaTrackMixerPage
             string Escape(string keyOrValue)
             {
                 return Regex.Replace(keyOrValue, @"[=;#\\]", $"\\$1");
+            }
+
+            void DeleteTempFiles()
+            {
+                foreach (var tempPath in pathToTempPathAndImage.SelectMany(p => p.Value).Select(t => t.tempPath))
+                {
+                    try
+                    {
+                        File.Delete(tempPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Log($"Failed to delete temp file {tempPath}: {ex}");
+                    }
+                }
             }
         }
 
