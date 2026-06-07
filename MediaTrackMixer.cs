@@ -272,6 +272,7 @@ namespace MediaTrackMixerPage
                 }, async process =>
                 {
                     //Pipe the metadata file through stdin. With this, no need to create a .txt file on disk
+                    logger.Log(metadataFileContent);
                     await process.StandardInput.WriteAsync(metadataFileContent);
                     await process.StandardInput.FlushAsync();
                 });
