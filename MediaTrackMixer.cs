@@ -15,6 +15,7 @@ namespace MediaTrackMixerPage
         public async Task<List<TrackGroup>> GetTracks(string[] inputs)
         {
             var trackGroups = new List<TrackGroup>();
+            if (inputs.Length == 0) return trackGroups;
             var outputLines = new List<string>();
             var inputStartsAt = -1;
             var inputArgs = "-loglevel repeat " + string.Join(" ", inputs.Select(inp => $"-i \"{inp}\"")); //The "repeat" loglevel option is to avoid the "Last message repeated <n> times" message, which would break the parsing of the output.
