@@ -337,14 +337,16 @@ namespace MediaTrackMixerPage
             }
         }
 
-        public async Task ExtractAttachment(string input, int attachmentTrackIndex, string output)
+        public async Task ExtractAttachment(string input, int attachmentTrackIndex, string output, bool isImage)
         {
-            rightTextPrimary.Report("Mixing...");
+            rightTextPrimary.Report("Extracting...");
             File.Delete(output);
-            await StartFfmpegProcess($"-dump_attachment:{attachmentTrackIndex} \"{output}\" -i \"{input}\"", (sender, args) =>
+            var command = isImage
+                ? $"-i \"{input}\" -map 0:{attachmentTrackIndex} -c copy \"{output}\""
+                : $"-dump_attachment:{attachmentTrackIndex} \"{output}\" -i \"{input}\"";
+            await StartFfmpegProcess(command, (sender, args) =>
             {
                 if (string.IsNullOrWhiteSpace(args.Data)) return;
-                Debug.WriteLine(args.Data);
                 logger.Log(args.Data);
                 HasError(args.Data);
             });

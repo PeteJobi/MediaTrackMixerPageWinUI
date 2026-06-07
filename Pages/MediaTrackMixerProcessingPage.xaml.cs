@@ -202,7 +202,7 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
         var isExtractingAttachment = viewModel.Tracks is [{ Type: TrackType.Attachment }]; //Meaning: viewModel.Tracks.Count == 1 && viewModel.Tracks[0].Type == TrackType.Attachment;
         outputFile = null;
         var processTask = isExtractingAttachment
-            ? mixer.ExtractAttachment(trackMaps[0].Path, trackMaps[0].TrackIndex, file.Path)
+            ? mixer.ExtractAttachment(trackMaps[0].Path, trackMaps[0].TrackIndex, file.Path, viewModel.Tracks[0].CodecOrMimeType?.Contains("image") == true)
             : mixer.Mix(file.Path, globalMetadata, chapters, trackMaps);
         outputFile = await ProcessManager.StartProcess(processTask);
         //outputFile = await ProcessManager.StartProcess(mixer.Mix(mixerTracks, file.Path, globalMetadata, chapters, trackMaps, isExtractingAttachment));
