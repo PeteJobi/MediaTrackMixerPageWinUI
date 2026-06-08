@@ -140,8 +140,7 @@ namespace MediaTrackMixerPage
                             .Select(c => c.Value[" (".Length..^")".Length]).ToList(); //Strip out " (" and ")"
                         if (streamType == "Attachment")
                         {
-                            result.Value = new Attachment(int.Parse(matchCollection[0].Groups[2].Value))
-                                { Dispositions = dispositions };
+                            result.Value = new Attachment(int.Parse(matchCollection[0].Groups[2].Value));
                         }
                         else
                         {
@@ -252,9 +251,19 @@ namespace MediaTrackMixerPage
             var pathAndSync = new List<(string path, SyncType syncType, TimeSpan syncChange)>();
             foreach (var trackMap in maps)
             {
-                var ps = (trackMap.Path, trackMap.SyncType,
-                    trackMap.SyncType == SyncType.None ? TimeSpan.Zero : trackMap.SyncChange);
-                var psIndex = pathAndSync.IndexOf(ps);
+                int psIndex;
+                (string path, SyncType syncType, TimeSpan syncChange) ps;
+                if (trackMap is StreamTrackMap streamTrackMap)
+                {
+                    ps = (trackMap.Path, streamTrackMap.SyncType,
+                        streamTrackMap.SyncType == SyncType.None ? TimeSpan.Zero : streamTrackMap.SyncChange);
+                    psIndex = pathAndSync.IndexOf(ps);
+                }
+                else
+                {
+                    psIndex = pathAndSync.FindIndex(p => p.path == trackMap.Path);
+                    ps = (trackMap.Path, SyncType.None, TimeSpan.Zero);
+                }
                 if (psIndex == -1)
                 {
                     trackToInputIndex.Add(trackMap, pathAndSync.Count);
@@ -297,10 +306,11 @@ namespace MediaTrackMixerPage
             var metadataMapArgs =
                 string.Join(' ', maps.Select((_, i) => $"-map_metadata:s:{i} {metadataFileIndex}:s:{i}"));
 
-            var dispositionArgs = string.Join(' ', maps.Select((trackMap, i) =>
+            var dispositionArgs = string.Join(' ', maps.Where(tm => tm is StreamTrackMap).Select((tm, i) =>
             {
                 var dispParams = "0";
-                if (trackMap.Dispositions.Count > 0) dispParams = string.Join('+', trackMap.Dispositions.Select(d => d.Replace(' ', '_')));
+                var streamTrackMap = (StreamTrackMap)tm;
+                if (streamTrackMap.Dispositions.Count > 0) dispParams = string.Join('+', streamTrackMap.Dispositions.Select(d => d.Replace(' ', '_')));
                 return $"-disposition:{i} {dispParams}";
             }));
 
@@ -487,7 +497,6 @@ namespace MediaTrackMixerPage
         {
             public int Index { get; set; } = index;
             public List<KeyValuePair<string, string>> Metadata { get; set; } = [];
-            public List<string> Dispositions { get; set; } = [];
         }
 
         public class TrackGroup(string path)
@@ -499,12 +508,15 @@ namespace MediaTrackMixerPage
             public List<Chapter> Chapters { get; set; } = [];
             public List<Attachment> Attachments { get; set; } = [];
         }
-        public class TrackMap(string path, int trackIndex, GeneralType type, List<KeyValuePair<string, string>> metadata, List<string> dispositions, SyncType syncType, TimeSpan syncChange)
+        public class TrackMap(string path, int trackIndex, GeneralType type, List<KeyValuePair<string, string>> metadata)
         {
             public string Path { get; set; } = path;
             public int TrackIndex { get; set; } = trackIndex;
             public GeneralType Type { get; set; } = type;
             public List<KeyValuePair<string, string>> Metadata { get; set; } = metadata;
+        }
+        public class StreamTrackMap(string path, int trackIndex, GeneralType type, List<KeyValuePair<string, string>> metadata, List<string> dispositions, SyncType syncType, TimeSpan syncChange): TrackMap(path, trackIndex, type, metadata)
+        {
             public List<string> Dispositions { get; set; } = dispositions;
             public SyncType SyncType { get; set; } = syncType;
             public TimeSpan SyncChange { get; set; } = syncChange;

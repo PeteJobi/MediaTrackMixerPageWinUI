@@ -125,7 +125,7 @@ public sealed partial class MediaTrackMixerMainPage : Page
                 var attMetadata = new MetadataEdit(
                     s.Metadata.Select(m => new MetadataItem(m.Key, m.Value)), track.PassedTitle);
                 attMetadata.First(m => m.Key == mimetypeKey).CantEdit = true;
-                track.Data = new TrackEdit(attMetadata, GetDispositionItems(s.Dispositions), track.PassedDefault, new SyncEdit(track.Type));
+                track.Data = attMetadata;
                 return track;
             })).ToList();
             if(t.Chapters.Count > 0)

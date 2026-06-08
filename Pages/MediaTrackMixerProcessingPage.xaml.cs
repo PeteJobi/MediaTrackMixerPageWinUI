@@ -149,21 +149,31 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
     private List<MediaTrackMixer.TrackMap> GetTrackMaps() => viewModel.Tracks.Where(tr => tr.Type is not (TrackType.Chapters or TrackType.GlobalMetadata))
         .Select(tr =>
     {
-        var inputIndex = mixerTracks.FindIndex(tg => tg.Path == tr.FullPath);
         var trackIndex = tr.Index;
         var type = Track.ModelToProcessorGeneralType(tr.Type);
-        var trackEdit = (TrackEdit)tr.Data;
-        var metadata = trackEdit.Metadata.Select(m => new KeyValuePair<string, string>(m.Key, m.Value)).ToList();
-        var dispositions = trackEdit.Dispositions.Where(d => d.Checked).Select(d => d.Key).ToList();
-        var syncType = trackEdit.Sync.SelectedOption switch
+        if (tr.Type == TrackType.Attachment)
         {
-            SyncEdit.NoSync => MediaTrackMixer.SyncType.None,
-            SyncEdit.Delay => MediaTrackMixer.SyncType.Delay,
-            SyncEdit.Hasten => MediaTrackMixer.SyncType.Hasten,
-            _ => throw new ArgumentOutOfRangeException()
-        };
-        var syncChange = trackEdit.Sync.Change;
-        return new MediaTrackMixer.TrackMap(tr.FullPath, trackIndex, type, metadata, dispositions, syncType, syncChange);
+            var metadataEdit = (MetadataEdit)tr.Data;
+            var metadata = metadataEdit.Select(m => new KeyValuePair<string, string>(m.Key, m.Value)).ToList();
+            return new MediaTrackMixer.TrackMap(tr.FullPath, trackIndex, type, metadata);
+        }
+        else
+        {
+            var trackEdit = (TrackEdit)tr.Data;
+            var metadata = trackEdit.Metadata.Select(m => new KeyValuePair<string, string>(m.Key, m.Value))
+                .ToList();
+            var dispositions = trackEdit.Dispositions.Where(d => d.Checked).Select(d => d.Key).ToList();
+            var syncType = trackEdit.Sync.SelectedOption switch
+            {
+                SyncEdit.NoSync => MediaTrackMixer.SyncType.None,
+                SyncEdit.Delay => MediaTrackMixer.SyncType.Delay,
+                SyncEdit.Hasten => MediaTrackMixer.SyncType.Hasten,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+            var syncChange = trackEdit.Sync.Change;
+            return new MediaTrackMixer.StreamTrackMap(tr.FullPath, trackIndex, type, metadata, dispositions,
+                syncType, syncChange);
+        }
     }).ToList();
 
     private (List<KeyValuePair<string, string>> globalMetadata, List<MediaTrackMixer.Chapter> chapters) GetGlobalData()
