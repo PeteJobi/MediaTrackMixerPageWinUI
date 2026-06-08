@@ -73,15 +73,20 @@ namespace MediaTrackMixerPage
             foreach (var trackGroup in trackGroups)
             {
                 if (Path.GetExtension(trackGroup.Path) != ".mkv") continue;
-                var insertCount = 0;
                 for (var i = 0; i < trackGroup.Tracks.Count; i++)
                 {
                     var track = trackGroup.Tracks[i];
                     if (track.Type != TrackType.Video || !track.Dispositions.Contains("attached pic")) continue;
                     trackGroup.Tracks.RemoveAt(i--);
-                    trackGroup.Attachments.Insert(insertCount++, new Attachment(track.Index)
+                    var insertIndex = trackGroup.Attachments.Count;
+                    for (var j = 0; j < trackGroup.Attachments.Count; j++)
                     {
-                        Dispositions = track.Dispositions,
+                        if (trackGroup.Attachments[j].Index <= track.Index) continue;
+                        insertIndex = j;
+                        break;
+                    }
+                    trackGroup.Attachments.Insert(insertIndex, new Attachment(track.Index)
+                    {
                         Metadata = track.Metadata
                     });
                 }
