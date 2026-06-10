@@ -215,7 +215,6 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
             ? mixer.ExtractAttachment(trackMaps[0].Path, trackMaps[0].TrackIndex, file.Path, viewModel.Tracks[0].CodecOrMimeType?.Contains("image") == true)
             : mixer.Mix(file.Path, globalMetadata, chapters, trackMaps);
         outputFile = await ProcessManager.StartProcess(processTask);
-        //outputFile = await ProcessManager.StartProcess(mixer.Mix(mixerTracks, file.Path, globalMetadata, chapters, trackMaps, isExtractingAttachment));
     }
 
     private async void GoBack(object sender, RoutedEventArgs e)
@@ -227,5 +226,51 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
             Effect = SlideNavigationTransitionEffect.FromLeft
         };
         Frame.NavigateToType(typeof(MediaTrackMixerMainPage), outputFile, new FrameNavigationOptions { IsNavigationStackEnabled = false, TransitionInfoOverride = transition });
+    }
+
+    private async void AddAttachment(object sender, RoutedEventArgs e)
+    {
+        var filePicker = new FileOpenPicker();
+        filePicker.FileTypeFilter.Add("*");
+        var windowId = XamlRoot?.ContentIslandEnvironment?.AppWindowId;
+        var hwnd = Win32Interop.GetWindowFromWindowId(windowId.Value);
+        WinRT.Interop.InitializeWithWindow.Initialize(filePicker, hwnd);
+        var files = await filePicker.PickMultipleFilesAsync();
+        foreach (var storageFile in files)
+        {
+            var title = new PassedTitle(TrackType.Attachment);
+            var fileName = Path.GetFileName(storageFile.Path);
+            var mimeType = storageFile.ContentType;
+            viewModel.Tracks.Add(new Track
+            {
+                Index = -1,
+                Type = TrackType.Attachment,
+                Colour = new Colour { Background = "Gray" },
+                CodecOrMimeType = mimeType,
+                PassedTitle = title,
+                FullPath = storageFile.Path,
+                FileName = fileName,
+                BindingProxy = globalProxy,
+                PassedDefault = new PassedDefault(),
+                Data = new MetadataEdit([
+                    new MetadataItem("filename", fileName),
+                    new MetadataItem("mimetype", mimeType)
+                ], title)
+            });
+        }
+    }
+
+    private void AddChapters(object sender, RoutedEventArgs e)
+    {
+        var title = new PassedTitle(TrackType.Chapters);
+        viewModel.Tracks.Add(new Track
+        {
+            Type = TrackType.Chapters,
+            Colour = new Colour { Background = "Gray" },
+            PassedTitle = title,
+            BindingProxy = globalProxy,
+            PassedDefault = new PassedDefault(),
+            Data = new ChaptersEdit([], title)
+        });
     }
 }

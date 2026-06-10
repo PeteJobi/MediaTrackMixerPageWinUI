@@ -195,50 +195,57 @@ namespace MediaTrackMixerPage
 
         public async Task Mix(string output, List<KeyValuePair<string, string>> globalMetadata, List<Chapter> chapters, List<TrackMap> maps)
         {
-            //Image attachments have to be treated differently from other attachments. They need to be extracted as images first, then re-attached as attachments.
-            var pathToTempPathAndImage = new Dictionary<string, List<(int index, string tempPath, List<KeyValuePair<string, string>> metadata)>>();
-            var nonImageAttachmentCount = 0;
+            if (maps.Any(m => m.Path == output))
             {
+                error("The output path selected is one of the inputs");
+                return;
+            }
+
+            var attachmentData = new List<AttachmentData>();
+            var existingNonImageAttachmentCount = 0;
+            {
+                var imageAttachmentWithInput = new List<(int TrackIndex, string InputPath, AttachmentData Data)>();
                 for (var i = 0; i < maps.Count; i++)
                 {
                     var trackMap = maps[i];
                     if (trackMap.Type != GeneralType.Attachment) continue;
-                    var mimetypeKvp = trackMap.Metadata.FirstOrDefault(m => m.Key == "mimetype");
-                    if (mimetypeKvp.Value?.StartsWith("image") != true)
+                    if (trackMap.TrackIndex == -1) //This means it's an attachment that the user added themselves, not one that was extracted from an input file. We can just use the original file as is, no need to extract it and re-attach it.
                     {
-                        nonImageAttachmentCount++;
-                        continue;
+                        attachmentData.Add(new AttachmentData(trackMap.Path, trackMap.Metadata, false));
+                    }
+                    else
+                    {
+                        var mimetypeKvp = trackMap.Metadata.FirstOrDefault(m => m.Key == "mimetype");
+                        if (mimetypeKvp.Value?.StartsWith("image") != true) //Existing image attachments have to be treated differently from other existing attachments. They need to be extracted as images first, then re-attached as attachments.
+                        {
+                            existingNonImageAttachmentCount++;
+                            continue;
+                        }
+
+                        attachmentData.Add(new AttachmentData(
+                            Path.Join(Path.GetTempPath(), $"{Path.GetRandomFileName()}.{mimetypeKvp.Value.Split("/").Last()}"),
+                            trackMap.Metadata, true));
+                        imageAttachmentWithInput.Add((trackMap.TrackIndex, trackMap.Path, attachmentData.Last()));
                     }
 
-                    if (!pathToTempPathAndImage.TryGetValue(trackMap.Path, out var tempList))
-                    {
-                        tempList = [];
-                        pathToTempPathAndImage[trackMap.Path] = tempList;
-                    }
-
-                    tempList.Add((
-                        trackMap.TrackIndex,
-                        Path.Join(Path.GetTempPath(), $"{Path.GetRandomFileName()}.{mimetypeKvp.Value.Split("/").Last()}"),
-                        trackMap.Metadata));
                     maps.RemoveAt(i--);
                 }
 
-                if (pathToTempPathAndImage.Count > 0)
+                if (imageAttachmentWithInput.Count > 0)
                 {
                     var inputsWithImageBuilder = new StringBuilder();
                     var mapsAndOutputsBuilder = new StringBuilder();
                     var n = 0;
-                    foreach (var (path, images) in pathToTempPathAndImage)
+                    foreach (var group in imageAttachmentWithInput.GroupBy(a => a.InputPath))
                     {
-                        inputsWithImageBuilder.Append($"-i \"{path}\" ");
+                        inputsWithImageBuilder.Append($"-i \"{group.Key}\" ");
                         var i = n++;
-                        mapsAndOutputsBuilder.Append(string.Join(' ', images.Select(t =>
-                            $"-map {i}:{t.index} -c copy -frames:v 1 \"{t.tempPath}\"")) + " ");
+                        mapsAndOutputsBuilder.Append(string.Join(' ', group.Select(t =>
+                            $"-map {i}:{t.TrackIndex} -c copy -frames:v 1 \"{t.Data.AttachmentPath}\"")) + " ");
                     }
                     await StartFfmpegProcess($"{inputsWithImageBuilder} {mapsAndOutputsBuilder}", (sender, args) =>
                     {
                         if (string.IsNullOrWhiteSpace(args.Data)) return;
-                        Debug.WriteLine(args.Data);
                         logger.Log(args.Data);
                         HasError(args.Data);
                     });
@@ -288,15 +295,14 @@ namespace MediaTrackMixerPage
             var metadataFileIndex = pathAndSync.Count;
             const string metadataFileArgs = "-f ffmetadata -i -";
 
-            var attachArgs = string.Join(' ', pathToTempPathAndImage.SelectMany(p =>
-                p.Value.Select(t =>
+            var attachArgs = string.Join(' ', attachmentData.Select(t =>
                 {
-                    var i = nonImageAttachmentCount; //New attachments are appended after existing attachments
+                    var i = existingNonImageAttachmentCount; //New attachments are appended after existing attachments
                     var attachmentMetadata = string.Join(' ',
-                        t.metadata.Select(m => $"-metadata:s:t:{i} {m.Key}=\"{m.Value}\""));
-                    nonImageAttachmentCount++;
-                    return $"-attach \"{t.tempPath}\" {attachmentMetadata}";
-                })));
+                        t.Metadata.Select(m => $"-metadata:s:t:{i} {m.Key}=\"{m.Value}\""));
+                    existingNonImageAttachmentCount++;
+                    return $"-attach \"{t.AttachmentPath}\" {attachmentMetadata}";
+                }));
 
             var mapArgs = string.Join(' ',
                 maps.Select(trackMap => $"-map {trackToInputIndex[trackMap]}:{trackMap.TrackIndex}"));
@@ -338,6 +344,7 @@ namespace MediaTrackMixerPage
                     if (string.IsNullOrWhiteSpace(args.Data)) return;
                     Debug.WriteLine(args.Data);
                     logger.Log(args.Data);
+                    if (CheckFailureStrings(args.Data)) return;
                     if (HasError(args.Data)) return;
                     if (durationsFound < maps.Count && args.Data.StartsWith("  Duration:"))
                     {
@@ -415,7 +422,7 @@ namespace MediaTrackMixerPage
 
             void DeleteTempFiles()
             {
-                foreach (var tempPath in pathToTempPathAndImage.SelectMany(p => p.Value).Select(t => t.tempPath))
+                foreach (var tempPath in attachmentData.Where(p => p.IsTempPath).Select(t => t.AttachmentPath))
                 {
                     try
                     {
@@ -431,6 +438,12 @@ namespace MediaTrackMixerPage
 
         public async Task ExtractAttachment(string input, int attachmentTrackIndex, string output, bool isImage)
         {
+            if (input == output)
+            {
+                error("Output path cannot be the same as input");
+                return;
+            }
+
             rightTextPrimary.Report("Extracting...");
             File.Delete(output);
             var command = isImage
@@ -456,14 +469,10 @@ namespace MediaTrackMixerPage
 
         private bool HasError(string line)
         {
-            if(line == "Conversion failed!"
-                    || line.StartsWith("Error initializing the muxer")
-                    || line.StartsWith("Error opening output file"))
-            {
-                error($"An error occurred while extracting attachment\n\n{line}");
-                return true;
-            }
-            return false;
+            if (!line.StartsWith("Error initializing the muxer")
+                && !line.StartsWith("Error opening output file")) return false;
+            error($"An error occurred during the process\n\n{line}");
+            return true;
         }
 
         private static TrackType GetTrackType(string type) => type switch
@@ -521,6 +530,8 @@ namespace MediaTrackMixerPage
             public SyncType SyncType { get; set; } = syncType;
             public TimeSpan SyncChange { get; set; } = syncChange;
         }
+
+        private record AttachmentData(string AttachmentPath, List<KeyValuePair<string, string>> Metadata, bool IsTempPath);
 
         public enum FfOutputEnum { Input, Duration, Chapters, Chapter, Stream, Metadata, MetadataEntry, SideData}
         public class FfOutputLeaf

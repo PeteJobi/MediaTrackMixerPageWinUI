@@ -18,7 +18,13 @@ namespace MediaTrackMixerPage.ViewModels
         public ObservableCollection<Track> Tracks
         {
             get => _tracks;
-            set => SetProperty(ref _tracks, value);
+            set
+            {
+                _tracks = value;
+                _tracks.CollectionChanged += _trackGroups_CollectionChanged;
+                OnPropertyChanged();
+                _trackGroups_CollectionChanged(null, null);
+            }
         }
         private OperationState _state;
         public OperationState State
@@ -30,7 +36,14 @@ namespace MediaTrackMixerPage.ViewModels
         public bool DuringOperation => State == OperationState.DuringOperation;
         public bool AfterOperation => State == OperationState.AfterOperation;
 
+        public bool HasChapters => Tracks.Any(t => t.Type == TrackType.Chapters);
+
         public event PropertyChangedEventHandler? PropertyChanged;
+
+        private void _trackGroups_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            OnPropertyChanged(nameof(HasChapters));
+        }
 
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {

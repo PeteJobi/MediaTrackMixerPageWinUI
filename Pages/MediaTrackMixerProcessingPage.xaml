@@ -21,19 +21,26 @@
     </Page.Resources>
 
     <RelativePanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10">
-        <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" TextWrapping="Wrap" MaxWidth="700" RelativePanel.Above="TracksListViewGrid"
+        <TextBlock x:Name="Instruction" Style="{ThemeResource CaptionTextBlockStyle}" TextWrapping="Wrap" MaxWidth="700"
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalTextAlignment="Justify">
                 You can rename track titles by clicking on the Edit button. You can also re-order tracks by 
                 dragging and dropping them. This order they appear in the list will determine the order they 
                 appear in the output media for each category.
         </TextBlock>
-        <Grid x:Name="TracksListViewGrid" Margin="0, 10, 0, 10" RelativePanel.AlignRightWithPanel="True" RelativePanel.Above="ControlsGrid"
-                  RelativePanel.AlignLeftWithPanel="True">
-            <ListView x:Name="TracksListView" CanReorderItems="True" CanDrag="True" AllowDrop="True" SelectionMode="None" HorizontalAlignment="Center"
-                          ItemsSource="{x:Bind viewModel.Tracks}" ItemTemplate="{StaticResource TrackTemplate}"/>
+        <Grid Margin="0, 10, 0, 10" RelativePanel.AlignRightWithPanel="True" RelativePanel.Above="ControlsGrid"
+              RelativePanel.AlignLeftWithPanel="True" RelativePanel.Below="Instruction">
+            <ListView CanReorderItems="True" CanDrag="True" AllowDrop="True" SelectionMode="None" HorizontalAlignment="Center"
+                      ItemsSource="{x:Bind viewModel.Tracks}" ItemTemplate="{StaticResource TrackTemplate}"/>
         </Grid>
         <StackPanel x:Name="ControlsGrid" Spacing="10" RelativePanel.AlignBottomWithPanel="True" RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True">
             <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                <Button Click="AddAttachment" ToolTipService.ToolTip="Add attachment">
+                    <SymbolIcon Symbol="Attach" />
+                </Button>
+                <Button Click="AddChapters" ToolTipService.ToolTip="Add chapters"
+                        Visibility="{x:Bind viewModel.HasChapters, Mode=OneWay, Converter={StaticResource BoolToNegatedVisibilityConverter}}">
+                    <SymbolIcon Symbol="Library" />
+                </Button>
                 <Button Width="150" Click="GoBack">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <SymbolIcon Symbol="Back" />
@@ -50,6 +57,5 @@
             </StackPanel>
             <controls:ProcessManager x:Name="ProcessManager" State="{x:Bind viewModel.State, Mode=TwoWay}" Processor="{x:Bind mixer}" OnlyPrimary="True"/>
         </StackPanel>
-        <ContentDialog Name="ErrorDialog" IsPrimaryButtonEnabled="True" PrimaryButtonText="Ok"/>
     </RelativePanel>
 </Page>

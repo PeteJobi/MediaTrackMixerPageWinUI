@@ -40,7 +40,7 @@ public class Track : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    public string IndexString => Type is TrackType.Chapters or TrackType.GlobalMetadata ? string.Empty : (Index + 1).ToString();
+    public string IndexString => Type is (TrackType.Chapters or TrackType.GlobalMetadata) || Index == -1 ? string.Empty : (Index + 1).ToString(); //-1 for attachments added in processing page
     public string? FileNameString => BindingProxy.OnSecondPage ? FileName : null;
     public string Icon => Type switch
     {
