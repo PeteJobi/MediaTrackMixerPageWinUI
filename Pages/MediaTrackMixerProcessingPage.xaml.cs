@@ -253,8 +253,8 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
                 BindingProxy = globalProxy,
                 PassedDefault = new PassedDefault(),
                 Data = new MetadataEdit([
-                    new MetadataItem("filename", fileName),
-                    new MetadataItem("mimetype", mimeType)
+                    new MetadataItem(MediaTrackMixer.Attachment.FileNameMetadataKey, fileName),
+                    new MetadataItem(MediaTrackMixer.Attachment.MimeTypeMetadataKey, mimeType)
                 ], title)
             });
         }

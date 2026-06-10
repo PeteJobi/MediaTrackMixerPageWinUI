@@ -109,11 +109,10 @@ public sealed partial class MediaTrackMixerMainPage : Page
                 return track;
             }).Concat(t.Attachments.Select(s =>
             {
-                var mimetypeKey = "mimetype";
                 var track = new Track
                 {
                     FullPath = t.Path,
-                    CodecOrMimeType = s.Metadata.First(m => m.Key == mimetypeKey).Value,
+                    CodecOrMimeType = s.Metadata.First(m => m.Key == MediaTrackMixer.Attachment.MimeTypeMetadataKey).Value,
                     Index = s.Index,
                     Type = TrackType.Attachment,
                     Colour = colour,
@@ -124,7 +123,7 @@ public sealed partial class MediaTrackMixerMainPage : Page
                 track.PassedTitle = new PassedTitle(track.Type);
                 var attMetadata = new MetadataEdit(
                     s.Metadata.Select(m => new MetadataItem(m.Key, m.Value)), track.PassedTitle);
-                attMetadata.First(m => m.Key == mimetypeKey).CantEdit = true;
+                attMetadata.First(m => m.Key == MediaTrackMixer.Attachment.MimeTypeMetadataKey).CantEdit = true;
                 track.Data = attMetadata;
                 return track;
             })).ToList();

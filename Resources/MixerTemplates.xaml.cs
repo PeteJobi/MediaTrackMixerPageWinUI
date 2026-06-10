@@ -37,7 +37,9 @@ namespace MediaTrackMixer.Resources
             var button = sender as Button;
             var chaptersEdit = (ChaptersEdit)button.DataContext;
             var individualTitle = new PassedTitle(TrackType.Chapters);
-            chaptersEdit.Add(new ChapterEdit(new MetadataEdit([new MetadataItem("title", $"Chapter {chaptersEdit.Count + 1}")], individualTitle), individualTitle)
+            chaptersEdit.Add(new ChapterEdit(new MetadataEdit([
+                new MetadataItem(MediaTrackMixerPage.MediaTrackMixer.Track.TitleMetadataKey,
+                    $"Chapter {chaptersEdit.Count + 1}")], individualTitle), individualTitle)
             {
                 Start = chaptersEdit.LastOrDefault()?.End ?? TimeSpan.Zero,
                 End = chaptersEdit.LastOrDefault()?.End ?? TimeSpan.Zero,

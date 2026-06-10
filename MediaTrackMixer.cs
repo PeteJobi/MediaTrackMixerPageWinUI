@@ -215,7 +215,7 @@ namespace MediaTrackMixerPage
                     }
                     else
                     {
-                        var mimetypeKvp = trackMap.Metadata.FirstOrDefault(m => m.Key == "mimetype");
+                        var mimetypeKvp = trackMap.Metadata.FirstOrDefault(m => m.Key == Attachment.MimeTypeMetadataKey);
                         if (mimetypeKvp.Value?.StartsWith("image") != true) //Existing image attachments have to be treated differently from other existing attachments. They need to be extracted as images first, then re-attached as attachments.
                         {
                             existingNonImageAttachmentCount++;
@@ -493,6 +493,8 @@ namespace MediaTrackMixerPage
             public string Codec { get; set; } = codec;
             public List<KeyValuePair<string, string>> Metadata { get; set; } = [];
             public List<string> Dispositions { get; set; } = [];
+
+            public const string TitleMetadataKey = "title";
         }
 
         public class Chapter
@@ -506,6 +508,9 @@ namespace MediaTrackMixerPage
         {
             public int Index { get; set; } = index;
             public List<KeyValuePair<string, string>> Metadata { get; set; } = [];
+
+            public const string FileNameMetadataKey = "filename";
+            public const string MimeTypeMetadataKey = "mimetype";
         }
 
         public class TrackGroup(string path)

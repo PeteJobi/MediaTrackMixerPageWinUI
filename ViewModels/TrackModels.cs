@@ -375,8 +375,8 @@ public class MetadataEdit : ObservableCollection<MetadataItem>
     {
         switch (PassedTitle.Type, item.Key)
         {
-            case (TrackType.Attachment, "filename"):
-            case (_, "title"):
+            case (TrackType.Attachment, MediaTrackMixer.Attachment.FileNameMetadataKey):
+            case (_, MediaTrackMixer.Track.TitleMetadataKey):
                 if(PassedTitle.Title != item.Value) PassedTitle.Title = item.Value;
                 return;
         }
@@ -388,7 +388,7 @@ public class MetadataEdit : ObservableCollection<MetadataItem>
         if (item != null) Remove(item);
     }
 
-    private string TitleKey => PassedTitle.Type == TrackType.Attachment ? "filename" : "title";
+    private string TitleKey => PassedTitle.Type == TrackType.Attachment ? MediaTrackMixer.Attachment.FileNameMetadataKey : MediaTrackMixer.Track.TitleMetadataKey;
 }
 
 public class ChaptersEdit : ObservableCollection<ChapterEdit>
