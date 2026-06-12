@@ -82,12 +82,12 @@ public class Track : INotifyPropertyChanged
     };
 
     private string MimeIcon(string? mimeType) => 
-        mimeType?.StartsWith("font") == true ? "\uE8D2"
+        mimeType?.Contains("font") == true ? "\uE8D2"
             : mimeType?.StartsWith("image") == true ? "\uE91B"
             : "\uE723";
 
     private string MimeToolTip(string? mimeType) => 
-        mimeType?.StartsWith("font") == true ? "Font"
+        mimeType?.Contains("font") == true ? "Font"
             : mimeType?.StartsWith("image") == true ? "Image"
             : "Attachment";
 }
