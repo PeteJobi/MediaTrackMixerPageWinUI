@@ -251,7 +251,6 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
                 FullPath = storageFile.Path,
                 FileName = fileName,
                 BindingProxy = globalProxy,
-                PassedDefault = new PassedDefault(),
                 Data = new MetadataEdit([
                     new MetadataItem(MediaTrackMixer.Attachment.FileNameMetadataKey, fileName),
                     new MetadataItem(MediaTrackMixer.Attachment.MimeTypeMetadataKey, mimeType)
@@ -269,7 +268,6 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
             Colour = new Colour { Background = "Gray" },
             PassedTitle = title,
             BindingProxy = globalProxy,
-            PassedDefault = new PassedDefault(),
             Data = new ChaptersEdit([], title)
         });
     }
