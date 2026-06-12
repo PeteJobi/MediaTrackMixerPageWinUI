@@ -22,7 +22,7 @@ public class Track : INotifyPropertyChanged
     public BindingProxy BindingProxy { get; set; }
     public object Data { get; set; }
     public PassedTitle PassedTitle { get; set; }
-    public PassedDefault PassedDefault { get; set; }
+    public PassedDefault? PassedDefault { get; set; }
     private bool _ineditmode;
     public bool InEditMode
     {
@@ -252,6 +252,14 @@ public class TrackEdit
                 }
             };
         }
+        passedDefault.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(PassedDefault.IsDefault))
+            {
+                var defaultDisposition = Dispositions.FirstOrDefault(d => d.Key == "default");
+                if (defaultDisposition != null) defaultDisposition.Checked = PassedDefault.IsDefault;
+            }
+        };
     }
 
     public string DispositionString => string.Join(" • ", Dispositions.Where(d => d.Checked).Select(d => d.Key));

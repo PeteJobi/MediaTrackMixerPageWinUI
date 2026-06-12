@@ -117,7 +117,6 @@ public sealed partial class MediaTrackMixerMainPage : Page
                     Type = TrackType.Attachment,
                     Colour = colour,
                     FileName = Path.GetFileName(t.Path),
-                    PassedDefault = new PassedDefault(),
                     BindingProxy = globalProxy
                 };
                 track.PassedTitle = new PassedTitle(track.Type);
@@ -135,7 +134,6 @@ public sealed partial class MediaTrackMixerMainPage : Page
                     Colour = colour,
                     FileName = Path.GetFileName(t.Path),
                     FullPath = t.Path,
-                    PassedDefault = new PassedDefault(),
                     BindingProxy = globalProxy
                 };
                 chapter.PassedTitle = new PassedTitle(chapter.Type); //This title shows number of chapters
@@ -156,7 +154,6 @@ public sealed partial class MediaTrackMixerMainPage : Page
                 Colour = colour,
                 FileName = Path.GetFileName(t.Path),
                 FullPath = t.Path,
-                PassedDefault = new PassedDefault(), //Not really used, but needed for IsDefault binding to be false
                 BindingProxy = globalProxy
             };
             globalMetadataTrack.PassedTitle = new PassedTitle(globalMetadataTrack.Type);

@@ -45,6 +45,13 @@ namespace MediaTrackMixer.Resources
                 End = chaptersEdit.LastOrDefault()?.End ?? TimeSpan.Zero,
             });
         }
+
+        private void MarkOrUnmarkAsDefault(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var track = button.DataContext as Track;
+            track.PassedDefault.IsDefault = !track.PassedDefault.IsDefault;
+        }
     }
 
     public class TrackDataTemplateSelector : DataTemplateSelector

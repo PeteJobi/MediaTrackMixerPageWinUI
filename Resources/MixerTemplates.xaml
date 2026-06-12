@@ -17,6 +17,7 @@
     <converters:BoolToObjectConverter x:Key="BoolToNegatedVisibilityConverter" TrueValue="Collapsed" FalseValue="Visible"/>
     <converters:StringVisibilityConverter x:Key="StringVisibilityConverter"/>
     <converters:EmptyObjectToObjectConverter x:Key="EmptyObjectToObjectConverter" EmptyValue="Collapsed" NotEmptyValue="Visible"/>
+    <converters:BoolToObjectConverter x:Key="DefaultIconOpacityConverter" TrueValue="1" FalseValue="0.3"/>
     <helpers:EnumToVisibilityConverter x:Key="EnumToVisibilityConverter" EnumType="viewModels:TrackType" EnumForVisibility="Attachment"/>
     <helpers:DoubleToVisibilityConverter x:Key="DoubleToVisibilityConverter"/>
     <textToTimeSpan:TimeSpanToTextConverter x:Key="TimeSpanToTextConverter"/>
@@ -228,7 +229,7 @@
                     <Grid Grid.Column="2" ColumnDefinitions="Auto, Auto" VerticalAlignment="Stretch"
                           Visibility="{x:Bind BindingProxy.OnSecondPage, Mode=OneWay, Converter={StaticResource BoolToNegatedVisibilityConverter}}">
                         <TextBlock VerticalAlignment="Center" Text="{x:Bind PassedTitle.Title}" TextTrimming="CharacterEllipsis"/>
-                        <FontIcon Grid.Column="1" Glyph="&#xF13E;" Visibility="{x:Bind PassedDefault.IsDefault, Mode=OneWay}" ToolTipService.ToolTip="Marked default" HorizontalAlignment="Left"/>
+                        <FontIcon Grid.Column="1" Glyph="&#xF13E;" Visibility="{x:Bind PassedDefault.IsDefault, Mode=OneWay, FallbackValue=Collapsed}" ToolTipService.ToolTip="Marked default" HorizontalAlignment="Left"/>
                     </Grid>
                     <Grid Grid.Column="2" VerticalAlignment="Stretch"
                           Visibility="{x:Bind BindingProxy.OnSecondPage, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -250,7 +251,10 @@
                         <ToggleButton Grid.Column="1" Margin="10,0,0,0" Click="TitleEdit" Visibility="{x:Bind IsNotChapter}">
                             <SymbolIcon Symbol="Edit" />
                         </ToggleButton>
-                        <FontIcon Grid.Column="2" Glyph="&#xF13E;" Visibility="{x:Bind PassedDefault.IsDefault, Mode=OneWay}" ToolTipService.ToolTip="Marked default"/>
+                        <Button Grid.Column="2" Style="{StaticResource TransparentHoverButtonStyle}" Click="MarkOrUnmarkAsDefault" ToolTipService.ToolTip="Mark/unmark as default"
+                                Visibility="{x:Bind PassedDefault, Mode=OneWay, Converter={StaticResource EmptyObjectToObjectConverter}}">
+                            <FontIcon Glyph="&#xF13E;" Opacity="{x:Bind PassedDefault.IsDefault, Mode=OneWay, Converter={StaticResource DefaultIconOpacityConverter}}"/>
+                        </Button>
                     </Grid>
                     <TextBlock Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right"
                            Text="{x:Bind CodecOrMimeType}" Margin="10,0" />
