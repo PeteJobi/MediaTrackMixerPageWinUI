@@ -18,16 +18,17 @@ namespace MediaTrackMixerPage
             if (inputs.Length == 0) return trackGroups;
             var outputLines = new List<string>();
             var inputStartsAt = -1;
-            var inputArgs = "-loglevel repeat " + string.Join(" ", inputs.Select(inp => $"-i \"{inp}\"")); //The "repeat" loglevel option is to avoid the "Last message repeated <n> times" message, which would break the parsing of the output.
-            await StartFfmpegProcess(inputArgs, (sender, args) =>
-            {
-                if (string.IsNullOrWhiteSpace(args.Data)) return;
-                logger.Log(args.Data);
-                if (args.Data.StartsWith(nameof(FfOutputEnum.Input)) && inputStartsAt == -1)
-                    inputStartsAt = outputLines.Count;
-                if (args.Data.StartsWith(' ') || args.Data.StartsWith(nameof(FfOutputEnum.Input)))
-                    outputLines.Add(args.Data);
-            });
+            await Ffmpeg().Inputs(inputs).NoOutput()
+                .ArgumentsBeforeInput("-loglevel repeat") //The "repeat" loglevel option is to avoid the "Last message repeated <n> times" message, which would break the parsing of the output.
+                .ErrorHandler((sender, args) =>
+                {
+                    if (string.IsNullOrWhiteSpace(args.Data)) return;
+                    logger.Log(args.Data);
+                    if (args.Data.StartsWith(nameof(FfOutputEnum.Input)) && inputStartsAt == -1)
+                        inputStartsAt = outputLines.Count;
+                    if (args.Data.StartsWith(' ') || args.Data.StartsWith(nameof(FfOutputEnum.Input)))
+                        outputLines.Add(args.Data);
+                }).StartPlainProcess();
             if (inputStartsAt == -1) return trackGroups;
             outputLines.RemoveRange(0, inputStartsAt);
             var parseResult = ParseOutputLines(FfOutputTree, 0, 0, out _);
