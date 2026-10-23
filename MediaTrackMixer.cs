@@ -35,12 +35,12 @@ namespace MediaTrackMixerPage
             if (parseResult == null) return trackGroups;
             trackGroups = parseResult.Select(r =>
             {
-                var path = (string)r.Value;
+                var (type, path) = ((string, string))r.Value;
                 var globalMetadata = r.Children.FirstOrDefault(c => c.First().Name == FfOutputEnum.Metadata);
                 var duration = r.Children.First(c => c.First().Name == FfOutputEnum.Duration)[0];
                 var chapters = r.Children.FirstOrDefault(c => c.First().Name == FfOutputEnum.Chapters) ??
                                [new FfOutputValueLeaf(FfOutputEnum.Chapters)];
-                var streams = r.Children.First(c => c.First().Name == FfOutputEnum.Stream);
+                var streams = type == "ffmetadata" ? [] : r.Children.First(c => c.First().Name == FfOutputEnum.Stream);
                 return new TrackGroup(path)
                 {
                     GlobalMetadata = globalMetadata == null ? new List<KeyValuePair<string, string>>()
@@ -111,9 +111,9 @@ namespace MediaTrackMixerPage
                 switch (currentLeaf.Name)
                 {
                     case FfOutputEnum.Input:
-                        matchCollection = Regex.Matches(line, @"Input #\d+,.+?from '(.+?)'");
+                        matchCollection = Regex.Matches(line, @"Input #\d+, (.+?), from '(.+?)'");
                         if (matchCollection.Count == 0) return null;
-                        result.Value = matchCollection[0].Groups[1].Value;
+                        result.Value = (matchCollection[0].Groups[1].Value, matchCollection[0].Groups[2].Value);
                         break;
                     case FfOutputEnum.Duration:
                         matchCollection = Regex.Matches(line, @"Duration:\s(?:(\d{2}:\d{2}:\d{2}\.\d{2})|N/A).+");
@@ -292,7 +292,7 @@ namespace MediaTrackMixerPage
                 return $"{offsetString}-i \"{ps.path}\"";
             }));
 
-            var metadataFileContent = CreateMetadataFile();
+            var metadataFileContent = CreateMetadataFile(globalMetadata, chapters, maps);
             var metadataFileIndex = pathAndSync.Count;
             const string metadataFileArgs = "-f ffmetadata -i -";
 
@@ -331,7 +331,7 @@ namespace MediaTrackMixerPage
                     break;
                 case ".mp3":
                     if (maps[0] is StreamTrackMap streamMap && streamMap.Codec != "libmp3lame")
-                    audioEncode = "-c:a libmp3lame";
+                        audioEncode = "-c:a libmp3lame";
                     break;
                 case ".m4a":
                     if (maps[0] is StreamTrackMap streamMap2 && streamMap2.Codec != "aac")
@@ -385,46 +385,7 @@ namespace MediaTrackMixerPage
             centerTextPrimary.Report("100 %");
             outputFile = output;
             DeleteTempFiles();
-
-            string CreateMetadataFile()
-            {
-                var stringBuilder = new StringBuilder();
-                stringBuilder.AppendLine(";FFMETADATA1");
-                AppendMetadata(globalMetadata);
-                stringBuilder.AppendLine();
-
-                foreach (var chapter in chapters)
-                {
-                    stringBuilder.AppendLine("[CHAPTER]");
-                    stringBuilder.AppendLine("TIMEBASE=1/1000");
-                    stringBuilder.AppendLine($"START={Math.Round(chapter.Start.TotalMilliseconds)}");
-                    stringBuilder.AppendLine($"END={Math.Round(chapter.End.TotalMilliseconds)}");
-                    AppendMetadata(chapter.Metadata);
-                }
-
-                stringBuilder.AppendLine();
-
-                foreach (var trackMap in maps)
-                {
-                    stringBuilder.AppendLine("[STREAM]");
-                    AppendMetadata(trackMap.Metadata);
-                }
-
-                return stringBuilder.ToString();
-
-                void AppendMetadata(List<KeyValuePair<string, string>> metadata)
-                {
-                    foreach (var kvp in metadata)
-                    {
-                        stringBuilder.AppendLine($"{Escape(kvp.Key)}={Escape(kvp.Value)}");
-                    }
-                }
-            }
-
-            string Escape(string keyOrValue)
-            {
-                return Regex.Replace(keyOrValue, @"[=;#\\]", $"\\$1");
-            }
+            return;
 
             void DeleteTempFiles()
             {
@@ -442,7 +403,7 @@ namespace MediaTrackMixerPage
             }
         }
 
-        public async Task ExtractAttachment(string input, int attachmentTrackIndex, string output, bool isImage)
+        public async Task ExtractAttachment(string input, string output, int attachmentTrackIndex, bool isImage)
         {
             if (input == output)
             {
@@ -464,6 +425,58 @@ namespace MediaTrackMixerPage
             progressPrimary.Report(100);
             centerTextPrimary.Report("100 %");
             outputFile = output;
+        }
+
+        public async Task ExtractGlobalMetadata(string output, List<KeyValuePair<string, string>> globalMetadata, List<Chapter> chapters)
+        {
+            rightTextPrimary.Report("Extracting...");
+            var metadataFileContent = CreateMetadataFile(globalMetadata, chapters, []);
+
+            await File.WriteAllTextAsync(output, metadataFileContent);
+
+            progressPrimary.Report(100);
+            centerTextPrimary.Report("100 %");
+            outputFile = output;
+        }
+
+        private static string CreateMetadataFile(List<KeyValuePair<string, string>> globalMetadata, List<Chapter> chapters, List<TrackMap> maps)
+        {
+            var stringBuilder = new StringBuilder();
+            stringBuilder.AppendLine(";FFMETADATA1");
+            AppendMetadata(globalMetadata);
+            stringBuilder.AppendLine();
+
+            foreach (var chapter in chapters)
+            {
+                stringBuilder.AppendLine("[CHAPTER]");
+                stringBuilder.AppendLine("TIMEBASE=1/1000");
+                stringBuilder.AppendLine($"START={Math.Round(chapter.Start.TotalMilliseconds)}");
+                stringBuilder.AppendLine($"END={Math.Round(chapter.End.TotalMilliseconds)}");
+                AppendMetadata(chapter.Metadata);
+            }
+
+            stringBuilder.AppendLine();
+
+            foreach (var trackMap in maps)
+            {
+                stringBuilder.AppendLine("[STREAM]");
+                AppendMetadata(trackMap.Metadata);
+            }
+
+            return stringBuilder.ToString();
+
+            void AppendMetadata(List<KeyValuePair<string, string>> metadata)
+            {
+                foreach (var kvp in metadata)
+                {
+                    stringBuilder.AppendLine($"{Escape(kvp.Key)}={Escape(kvp.Value)}");
+                }
+            }
+
+            static string Escape(string keyOrValue)
+            {
+                return Regex.Replace(keyOrValue, @"[=;#\\]", "\\$1");
+            }
         }
 
         public (string name, string ext) GetFileNameAndExtension(string fileNameWithExtension)

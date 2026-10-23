@@ -60,17 +60,17 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
     private (string, PickerLocationId, IEnumerable<string>) GetSaveParameters()
     {
         var containsVideo = false;
-        var containsChapters = false;
         var containsAudio = false;
         var containsSubtitles = false;
         var containsAttachments = false;
+        var containsChapters = false;
+        var containsGlobalMetadata = false;
         var subtitleExtension = string.Empty;
         var audioExtension = string.Empty;
         var attachmentName = string.Empty;
         var attachmentExtension = string.Empty;
         foreach (var track in viewModel.Tracks)
         {
-            if(track.Type == TrackType.GlobalMetadata) continue;
             switch (track.Type)
             {
                 case TrackType.Video:
@@ -84,9 +84,6 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
                     containsSubtitles = true;
                     subtitleExtension = track.CodecOrMimeType == "ass" ? ".ass" : ".srt";
                     break;
-                case TrackType.Chapters:
-                    containsChapters = true;
-                    break;
                 case TrackType.Attachment:
                     containsAttachments = true;
                     (attachmentName, attachmentExtension) = track.PassedTitle.Title?.Contains('.') == true 
@@ -95,12 +92,18 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
                                 ? (track.PassedTitle.Title, ".file") 
                                 : ("New attachment", ".file");
                     break;
+                case TrackType.Chapters:
+                    containsChapters = true;
+                    break;
+                case TrackType.GlobalMetadata:
+                    containsGlobalMetadata = true;
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
         }
 
-        if (containsChapters || ((containsVideo || containsAudio) && (containsSubtitles || containsAttachments)))
+        if ((containsVideo || containsAudio) && (containsSubtitles || containsAttachments))
         {
             return ("New video", PickerLocationId.VideosLibrary, FileTypeChoices(".mkv"));
         }
@@ -141,6 +144,17 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
         if (containsAttachments)
         {
             return (attachmentName, PickerLocationId.DocumentsLibrary, FileTypeChoices(attachmentExtension));
+        }
+
+        if (containsChapters || containsGlobalMetadata)
+        {
+            var fileName = (containsChapters, containsGlobalMetadata) switch
+            {
+                (true, false) => "New chapters",
+                (false, true) => "New global metadata",
+                _ => "New global metadata with chapters"
+            };
+            return (fileName, PickerLocationId.Downloads, FileTypeChoices(".txt"));
         }
 
         return ("New file", PickerLocationId.Downloads, FileTypeChoices(".mp4"));
@@ -212,10 +226,13 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
         var trackMaps = GetTrackMaps();
         var (globalMetadata, chapters) = GetGlobalData();
         var isExtractingAttachment = viewModel.Tracks is [{ Type: TrackType.Attachment }]; //Meaning: viewModel.Tracks.Count == 1 && viewModel.Tracks[0].Type == TrackType.Attachment;
+        var isExtractingGlobalMetadata = viewModel.Tracks.All(t => t.Type is TrackType.GlobalMetadata or TrackType.Chapters);
         outputFile = null;
         var processTask = () => isExtractingAttachment
-            ? mixer.ExtractAttachment(trackMaps[0].Path, trackMaps[0].TrackIndex, file.Path, viewModel.Tracks[0].CodecOrMimeType?.Contains("image") == true)
-            : mixer.Mix(file.Path, globalMetadata, chapters, trackMaps);
+            ? mixer.ExtractAttachment(trackMaps[0].Path, file.Path, trackMaps[0].TrackIndex, viewModel.Tracks[0].CodecOrMimeType?.Contains("image") == true)
+            : isExtractingGlobalMetadata
+                ? mixer.ExtractGlobalMetadata(file.Path, globalMetadata, chapters)
+                : mixer.Mix(file.Path, globalMetadata, chapters, trackMaps);
         outputFile = await ProcessManager.StartProcess(processTask);
     }
 

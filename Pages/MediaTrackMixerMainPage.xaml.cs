@@ -32,7 +32,7 @@ public sealed partial class MediaTrackMixerMainPage : Page
     private string? navigateTo;
     private string ffmpegPath;
     private List<string> outputFiles = [];
-    public static List<string> AllSupportedTypes = [ ".mkv", ".mp4", ".png", ".jpg", ".jpeg", ".m4a", ".mp3", ".wav", ".srt", ".ass" ];
+    public static readonly List<string> AllSupportedTypes = [ ".mkv", ".mp4", ".png", ".jpg", ".jpeg", ".m4a", ".mp3", ".wav", ".srt", ".ass", ".txt"];
     (string, bool)[] colours =
     [
         ("Magenta", true),
