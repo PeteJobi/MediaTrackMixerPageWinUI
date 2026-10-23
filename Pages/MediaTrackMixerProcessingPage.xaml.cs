@@ -65,6 +65,7 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
         var containsSubtitles = false;
         var containsAttachments = false;
         var subtitleExtension = string.Empty;
+        var audioExtension = string.Empty;
         var attachmentName = string.Empty;
         var attachmentExtension = string.Empty;
         foreach (var track in viewModel.Tracks)
@@ -77,6 +78,7 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
                     break;
                 case TrackType.Audio:
                     containsAudio = true;
+                    audioExtension = track.CodecOrMimeType == "aac" ? ".m4a" : ".mp3";
                     break;
                 case TrackType.Subtitle:
                     containsSubtitles = true;
@@ -128,7 +130,7 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
 
         if (containsAudio)
         {
-            return ("New audio", PickerLocationId.MusicLibrary, FileTypeChoices(".mp3"));
+            return ("New audio", PickerLocationId.MusicLibrary, FileTypeChoices(audioExtension));
         }
 
         if (containsSubtitles)
@@ -171,7 +173,7 @@ public sealed partial class MediaTrackMixerProcessingPage : Page
                 _ => throw new ArgumentOutOfRangeException()
             };
             var syncChange = trackEdit.Sync.Change;
-            return new MediaTrackMixer.StreamTrackMap(tr.FullPath, trackIndex, type, metadata, dispositions,
+            return new MediaTrackMixer.StreamTrackMap(tr.FullPath, trackIndex, type, tr.CodecOrMimeType, metadata, dispositions,
                 syncType, syncChange);
         }
     }).ToList();

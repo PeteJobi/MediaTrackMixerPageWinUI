@@ -330,7 +330,12 @@ namespace MediaTrackMixerPage
                     subtitleEncode = "-c:s mov_text";
                     break;
                 case ".mp3":
+                    if (maps[0] is StreamTrackMap streamMap && streamMap.Codec != "libmp3lame")
                     audioEncode = "-c:a libmp3lame";
+                    break;
+                case ".m4a":
+                    if (maps[0] is StreamTrackMap streamMap2 && streamMap2.Codec != "aac")
+                        audioEncode = "-c:a aac";
                     break;
             }
 
@@ -530,11 +535,12 @@ namespace MediaTrackMixerPage
             public GeneralType Type { get; set; } = type;
             public List<KeyValuePair<string, string>> Metadata { get; set; } = metadata;
         }
-        public class StreamTrackMap(string path, int trackIndex, GeneralType type, List<KeyValuePair<string, string>> metadata, List<string> dispositions, SyncType syncType, TimeSpan syncChange): TrackMap(path, trackIndex, type, metadata)
+        public class StreamTrackMap(string path, int trackIndex, GeneralType type, string? codec, List<KeyValuePair<string, string>> metadata, List<string> dispositions, SyncType syncType, TimeSpan syncChange): TrackMap(path, trackIndex, type, metadata)
         {
             public List<string> Dispositions { get; set; } = dispositions;
             public SyncType SyncType { get; set; } = syncType;
             public TimeSpan SyncChange { get; set; } = syncChange;
+            public string Codec { get; set; } = codec;
         }
 
         private record AttachmentData(string AttachmentPath, List<KeyValuePair<string, string>> Metadata, bool IsTempPath);
